@@ -1,10 +1,11 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { DarkTheme, DefaultTheme, ThemeProvider as NavigationThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { SplashScreen, Stack } from 'expo-router';
 import { useEffect } from 'react';
 import { useColorScheme } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { ThemeProvider } from '@/assets/style/ThemeProvider';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -48,20 +49,22 @@ function RootLayoutNav() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Stack>
-          {/* Root route: SignIn screen */}
-          <Stack.Screen name="index" options={{ headerShown: false }} />
-          
-          {/* Tabs route */}
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          
-          {/* Not-found route */}
-          <Stack.Screen name="+not-found" />
-          
-          {/* Modal route */}
-          <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-        </Stack>
+      <ThemeProvider>
+        <NavigationThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <Stack>
+            {/* Root route: SignIn screen */}
+            <Stack.Screen name="index" options={{ headerShown: false }} />
+            
+            {/* Tabs route */}
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            
+            {/* Not-found route */}
+            <Stack.Screen name="+not-found" />
+            
+            {/* Modal route */}
+            <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+          </Stack>
+        </NavigationThemeProvider>
       </ThemeProvider>
     </GestureHandlerRootView>
   );
