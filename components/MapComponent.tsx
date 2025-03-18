@@ -1,7 +1,10 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { WebView } from 'react-native-webview';
 import styled from 'styled-components/native';
 import { Theme } from '@/assets/style/theme';
+import * as Location from 'expo-location';
+import { Alert, Platform, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 interface Location {
   location: string;
@@ -21,6 +24,32 @@ const MapContainer = styled.View<{ theme: Theme }>`
   background-color: ${({ theme }) => theme.colors.background};
 `;
 
+const LocationButton = styled.TouchableOpacity<{ theme: Theme }>`
+  position: absolute;
+  bottom: 100px;
+  right: 16px;
+  background-color: ${({ theme }) => theme.colors.background};
+  width: 44px;
+  height: 44px;
+  border-radius: 22px;
+  justify-content: center;
+  align-items: center;
+  elevation: 4;
+  shadow-color: ${({ theme }) => theme.colors.shadow.color};
+  shadow-offset: 0px 2px;
+  shadow-opacity: ${({ theme }) => theme.colors.shadow.opacity};
+  shadow-radius: 4px;
+`;
+
+const LoadingContainer = styled.View`
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.3);
+`;
+
 const MapComponent: React.FC<MapComponentProps> = ({ 
   selectedLocation, 
   defaultCenter, 
@@ -28,6 +57,143 @@ const MapComponent: React.FC<MapComponentProps> = ({
   isDarkMode 
 }) => {
   const webViewRef = useRef<WebView | null>(null);
+  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+  const [isGpsEnabled, setIsGpsEnabled] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const locationCheckInterval = useRef<NodeJS.Timeout | null>(null);
+
+  const checkLocationServices = async () => {
+    try {
+      const providerStatus = await Location.getProviderStatusAsync();
+      setIsGpsEnabled(providerStatus.locationServicesEnabled);
+      return providerStatus.locationServicesEnabled;
+    } catch (error) {
+      console.error('Error checking location services:', error);
+      return false;
+    }
+  };
+
+  const startLocationCheck = () => {
+    setIsLoading(true);
+    // Check every second if location has been enabled
+    locationCheckInterval.current = setInterval(async () => {
+      const isEnabled = await checkLocationServices();
+      if (isEnabled) {
+        clearInterval(locationCheckInterval.current!);
+        setIsLoading(false);
+        initializeLocationTracking();
+      }
+    }, 1000);
+
+    // Stop checking after 30 seconds
+    setTimeout(() => {
+      if (locationCheckInterval.current) {
+        clearInterval(locationCheckInterval.current);
+        setIsLoading(false);
+      }
+    }, 30000);
+  };
+
+  const handleLocationError = () => {
+    Alert.alert(
+      'Enable Location Services',
+      Platform.select({
+        ios: 'Please swipe up to access Control Center and tap the Location icon to enable GPS.',
+        android: 'Please swipe down to access Quick Settings and tap the Location icon to enable GPS.',
+      }),
+      [
+        { 
+          text: 'OK, I\'ll Enable',
+          onPress: () => {
+            startLocationCheck();
+          }
+        },
+        {
+          text: 'Cancel',
+          style: 'cancel',
+          onPress: () => setIsLoading(false)
+        }
+      ]
+    );
+  };
+
+  const initializeLocationTracking = async () => {
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(
+          'Permission Needed',
+          'Location permission is required to show your position on the map.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
+      // Start watching position
+      const locationSubscription = await Location.watchPositionAsync(
+        {
+          accuracy: Location.Accuracy.High,
+          timeInterval: 10000,
+          distanceInterval: 10,
+        },
+        (location) => {
+          const newLocation: [number, number] = [
+            location.coords.latitude,
+            location.coords.longitude
+          ];
+          setUserLocation(newLocation);
+          
+          if (webViewRef.current) {
+            webViewRef.current.postMessage(JSON.stringify({
+              type: 'updateUserLocation',
+              location: newLocation
+            }));
+          }
+        }
+      );
+
+      return locationSubscription;
+    } catch (error) {
+      console.error('Error initializing location tracking:', error);
+      return null;
+    }
+  };
+
+  const centerOnUserLocation = async () => {
+    const isEnabled = await checkLocationServices();
+    
+    if (!isEnabled) {
+      handleLocationError();
+      return;
+    }
+
+    if (userLocation && webViewRef.current) {
+      webViewRef.current.postMessage(JSON.stringify({
+        type: 'centerOnUserLocation',
+        location: userLocation
+      }));
+    }
+  };
+
+  useEffect(() => {
+    let locationSubscription: Location.LocationSubscription | null = null;
+
+    (async () => {
+      const isEnabled = await checkLocationServices();
+      if (isEnabled) {
+        locationSubscription = await initializeLocationTracking();
+      }
+    })();
+
+    return () => {
+      if (locationSubscription) {
+        locationSubscription.remove();
+      }
+      if (locationCheckInterval.current) {
+        clearInterval(locationCheckInterval.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (webViewRef.current && selectedLocation) {
@@ -114,6 +280,31 @@ const MapComponent: React.FC<MapComponentProps> = ({
                     background-color: ${isDarkMode ? 'rgba(30, 30, 30, 0.8)' : 'rgba(255, 255, 255, 0.8)'} !important;
                     color: ${isDarkMode ? '#B3B3B3' : '#666666'} !important;
                   }
+                  .user-location-pulse {
+                    border-radius: 50%;
+                    height: 16px;
+                    width: 16px;
+                    background: ${isDarkMode ? '#4285F4' : '#1A73E8'};
+                    box-shadow: 0 0 0 rgba(26, 115, 232, 0.4);
+                    animation: pulse 2s infinite;
+                  }
+                  @keyframes pulse {
+                    0% {
+                      box-shadow: 0 0 0 0 rgba(26, 115, 232, 0.4);
+                    }
+                    70% {
+                      box-shadow: 0 0 0 20px rgba(26, 115, 232, 0);
+                    }
+                    100% {
+                      box-shadow: 0 0 0 0 rgba(26, 115, 232, 0);
+                    }
+                  }
+                  .user-location-button {
+                    transition: transform 0.2s ease;
+                  }
+                  .user-location-button:active {
+                    transform: scale(0.95);
+                  }
                 </style>
               </head>
               <body>
@@ -131,6 +322,29 @@ const MapComponent: React.FC<MapComponentProps> = ({
                     maxZoom: 19,
                     attribution: '&copy; OpenStreetMap contributors'
                   }).addTo(map);
+
+                  // Create user location marker
+                  let userMarker = null;
+                  let userAccuracyCircle = null;
+
+                  function updateUserLocation(coords) {
+                    const latlng = L.latLng(coords[0], coords[1]);
+                    
+                    if (!userMarker) {
+                      // Create user location marker with pulse effect
+                      userMarker = L.divIcon({
+                        className: 'user-location-pulse',
+                        iconSize: [16, 16],
+                      });
+                      
+                      L.marker(latlng, {
+                        icon: userMarker,
+                        zIndexOffset: 1000
+                      }).addTo(map);
+                    } else {
+                      userMarker.setLatLng(latlng);
+                    }
+                  }
 
                   const createCustomIcon = (status) => {
                     const colors = {
@@ -195,6 +409,14 @@ const MapComponent: React.FC<MapComponentProps> = ({
                         });
                         marker.openPopup();
                       }
+                    } else if (message.type === 'updateUserLocation') {
+                      updateUserLocation(message.location);
+                    } else if (message.type === 'centerOnUserLocation') {
+                      const coords = message.location;
+                      map.flyTo(coords, 17, {
+                        duration: 1,
+                        easeLinearity: 0.25
+                      });
                     }
                   });
                 </script>
@@ -203,6 +425,22 @@ const MapComponent: React.FC<MapComponentProps> = ({
           `,
         }}
       />
+      <LocationButton
+        onPress={centerOnUserLocation}
+        activeOpacity={0.8}
+        disabled={isLoading}
+      >
+        <Ionicons 
+          name="locate" 
+          size={24} 
+          color={isDarkMode ? '#FFFFFF' : '#000000'} 
+        />
+      </LocationButton>
+      {isLoading && (
+        <LoadingContainer>
+          <ActivityIndicator size="large" color={isDarkMode ? '#FFFFFF' : '#000000'} />
+        </LoadingContainer>
+      )}
     </MapContainer>
   );
 };
