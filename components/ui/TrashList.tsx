@@ -213,14 +213,19 @@ const TrashList: React.FC<TrashListProps> = ({
           <HeaderContent>
             <TitleContainer>
               <Title>Trash Locations</Title>
-              <AddButton onPress={() => setIsAddingTrash(true)}>
-                <Ionicons name="add-circle-outline" size={24} color={theme.colors.primary} />
-              </AddButton>
             </TitleContainer>
-            {!isAddingTrash && (
-              <Subtitle>{trashLocations.length} locations found</Subtitle>
-            )}
+            <AddButton onPress={() => setIsAddingTrash(true)}>
+              <Ionicons 
+                name="add-circle" 
+                size={32} 
+                color={theme.colors.primary}
+                style={{ opacity: 0.9 }}
+              />
+            </AddButton>
           </HeaderContent>
+          {!isAddingTrash && (
+            <Subtitle>{trashLocations.length} locations found</Subtitle>
+          )}
         </Header>
 
         {isAddingTrash ? (

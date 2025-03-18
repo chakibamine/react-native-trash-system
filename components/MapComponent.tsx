@@ -26,6 +26,30 @@ const MapContainer = styled.View<{ theme: Theme }>`
   background-color: ${({ theme }) => theme.colors.background};
 `;
 
+const SelectionMessage = styled.View<{ theme: Theme }>`
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  right: 16px;
+  background-color: ${({ theme }) => theme.colors.background};
+  padding: 12px;
+  border-radius: ${({ theme }) => theme.borderRadius.md}px;
+  flex-direction: row;
+  align-items: center;
+  elevation: 4;
+  shadow-color: ${({ theme }) => theme.colors.shadow.color};
+  shadow-offset: 0px 2px;
+  shadow-opacity: ${({ theme }) => theme.colors.shadow.opacity};
+  shadow-radius: 4px;
+`;
+
+const SelectionText = styled.Text<{ theme: Theme }>`
+  color: ${({ theme }) => theme.colors.text.primary};
+  font-size: ${({ theme }) => theme.typography.body.fontSize}px;
+  margin-left: 8px;
+  flex: 1;
+`;
+
 const LocationButton = styled.TouchableOpacity<{ theme: Theme }>`
   position: absolute;
   bottom: 100px;
@@ -327,6 +351,17 @@ const MapComponent: React.FC<MapComponentProps> = ({
                   .map-selecting * {
                     cursor: crosshair !important;
                   }
+                  .temp-marker-icon {
+                    animation: bounce 0.5s infinite alternate;
+                  }
+                  @keyframes bounce {
+                    from {
+                      transform: translateY(0);
+                    }
+                    to {
+                      transform: translateY(-10px);
+                    }
+                  }
                 </style>
               </head>
               <body>
@@ -424,9 +459,20 @@ const MapComponent: React.FC<MapComponentProps> = ({
                         map.removeLayer(tempMarker);
                       }
                       
-                      // Create new temporary marker
+                      // Create new temporary marker with bouncing animation
+                      const tempIcon = L.divIcon({
+                        className: 'temp-marker-icon',
+                        html: \`<svg width="32" height="48" viewBox="0 0 32 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M16 0C7.16 0 0 7.16 0 16C0 28 16 48 16 48C16 48 32 28 32 16C32 7.16 24.84 0 16 0ZM16 22C12.68 22 10 19.32 10 16C10 12.68 12.68 10 16 10C19.32 10 22 12.68 22 16C22 19.32 19.32 22 16 22Z" 
+                          fill="${isDarkMode ? '#4CAF50' : '#34A853'}"
+                          fill-opacity="0.9"/>
+                        </svg>\`,
+                        iconSize: [32, 48],
+                        iconAnchor: [16, 48]
+                      });
+                      
                       tempMarker = L.marker([e.latlng.lat, e.latlng.lng], {
-                        icon: createCustomIcon('empty')
+                        icon: tempIcon
                       }).addTo(map);
 
                       // Send coordinates back to React Native
@@ -476,6 +522,18 @@ const MapComponent: React.FC<MapComponentProps> = ({
           `,
         }}
       />
+      {isSelectingLocation && (
+        <SelectionMessage>
+          <Ionicons 
+            name="location" 
+            size={24} 
+            color={isDarkMode ? '#4CAF50' : '#34A853'} 
+          />
+          <SelectionText>
+            Tap anywhere on the map to select a location
+          </SelectionText>
+        </SelectionMessage>
+      )}
       <LocationButton
         onPress={centerOnUserLocation}
         activeOpacity={0.8}
