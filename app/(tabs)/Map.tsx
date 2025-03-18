@@ -1,43 +1,48 @@
 import MapComponent from '@/components/MapComponent';
 import TrashList from '@/components/ui/TrashList';
 import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import styled from 'styled-components/native';
+import { useTheme } from '@/assets/style/ThemeProvider';
 
+const Container = styled.View`
+  flex: 1;
+  background-color: ${({ theme }) => theme.colors.background};
+`;
 
-export default function ExploreScreen() {
+interface Location {
+  location: string;
+  status: string;
+  coordinates: [number, number];
+}
+
+export default function MapScreen() {
+  const { theme } = useTheme();
+  
   // List of trash locations with coordinates
-  const trashLocations = [
+  const trashLocations: Location[] = [
     { location: "AV HASSAN 2", status: "empty", coordinates: [31.6295, -7.9811] },
     { location: "AV Mohamed V", status: "full", coordinates: [31.6305, -7.9821] },
     { location: "AV HASSAN 2", status: "empty", coordinates: [31.6285, -7.9801] },
   ];
 
   // State to track the selected trash location
-  const [selectedLocation, setSelectedLocation] = useState(null);
+  const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
 
   // Define default center coordinates
-  const defaultCenter = [31.6295, -7.9811];
+  const defaultCenter: [number, number] = [31.6295, -7.9811];
 
   return (
-    <View style={styles.container}>
-      {/* Map View */}
+    <Container>
       <MapComponent
-        selectedLocation={selectedLocation} 
-        defaultCenter={defaultCenter} 
-        trashLocations={trashLocations} 
+        selectedLocation={selectedLocation}
+        defaultCenter={defaultCenter}
+        trashLocations={trashLocations}
+        isDarkMode={theme.isDark}
       />
-
-      {/* Trash List at the Bottom */}
       <TrashList
-        trashLocations={trashLocations} 
-        setSelectedLocation={setSelectedLocation} 
+        trashLocations={trashLocations}
+        setSelectedLocation={setSelectedLocation}
       />
-    </View>
+    </Container>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-});
