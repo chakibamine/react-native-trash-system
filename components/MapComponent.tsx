@@ -17,6 +17,8 @@ interface MapComponentProps {
   defaultCenter: [number, number];
   trashLocations: Location[];
   isDarkMode: boolean;
+  isSelectingLocation?: boolean;
+  onLocationSelect?: (coordinates: [number, number]) => void;
 }
 
 const MapContainer = styled.View<{ theme: Theme }>`
@@ -54,7 +56,9 @@ const MapComponent: React.FC<MapComponentProps> = ({
   selectedLocation, 
   defaultCenter, 
   trashLocations,
-  isDarkMode 
+  isDarkMode,
+  isSelectingLocation = false,
+  onLocationSelect
 }) => {
   const webViewRef = useRef<WebView | null>(null);
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
@@ -210,12 +214,24 @@ const MapComponent: React.FC<MapComponentProps> = ({
     filter: brightness(0.8) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7);
   `;
 
+  const handleMessage = (event: any) => {
+    try {
+      const data = JSON.parse(event.nativeEvent.data);
+      if (data.type === 'mapClick' && isSelectingLocation && onLocationSelect) {
+        onLocationSelect([data.lat, data.lng]);
+      }
+    } catch (error) {
+      console.error('Error handling message:', error);
+    }
+  };
+
   return (
     <MapContainer>
       <WebView
         ref={webViewRef}
         originWhitelist={['*']}
         javaScriptEnabled={true}
+        onMessage={handleMessage}
         source={{
           html: `
             <!DOCTYPE html>
@@ -305,6 +321,12 @@ const MapComponent: React.FC<MapComponentProps> = ({
                   .user-location-button:active {
                     transform: scale(0.95);
                   }
+                  .map-selecting {
+                    cursor: crosshair !important;
+                  }
+                  .map-selecting * {
+                    cursor: crosshair !important;
+                  }
                 </style>
               </head>
               <body>
@@ -326,12 +348,12 @@ const MapComponent: React.FC<MapComponentProps> = ({
                   // Create user location marker
                   let userMarker = null;
                   let userAccuracyCircle = null;
+                  let tempMarker = null;
 
                   function updateUserLocation(coords) {
                     const latlng = L.latLng(coords[0], coords[1]);
                     
                     if (!userMarker) {
-                      // Create user location marker with pulse effect
                       userMarker = L.divIcon({
                         className: 'user-location-pulse',
                         iconSize: [16, 16],
@@ -393,6 +415,35 @@ const MapComponent: React.FC<MapComponentProps> = ({
                     marker.coordinates = loc.coordinates;
                     markers.push(marker);
                   });
+
+                  // Handle map clicks for location selection
+                  map.on('click', function(e) {
+                    if (${isSelectingLocation}) {
+                      // Remove previous temporary marker if it exists
+                      if (tempMarker) {
+                        map.removeLayer(tempMarker);
+                      }
+                      
+                      // Create new temporary marker
+                      tempMarker = L.marker([e.latlng.lat, e.latlng.lng], {
+                        icon: createCustomIcon('empty')
+                      }).addTo(map);
+
+                      // Send coordinates back to React Native
+                      window.ReactNativeWebView.postMessage(JSON.stringify({
+                        type: 'mapClick',
+                        lat: e.latlng.lat,
+                        lng: e.latlng.lng
+                      }));
+                    }
+                  });
+
+                  // Update cursor style based on selection mode
+                  if (${isSelectingLocation}) {
+                    document.getElementById('map').classList.add('map-selecting');
+                  } else {
+                    document.getElementById('map').classList.remove('map-selecting');
+                  }
 
                   document.addEventListener('message', (event) => {
                     const message = JSON.parse(event.data);
