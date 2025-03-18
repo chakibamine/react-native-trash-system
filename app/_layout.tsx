@@ -51,12 +51,12 @@ function RootLayoutNav() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ThemeProvider>
         <NavigationThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <Stack>
+          <Stack screenOptions={{ headerShown: false }}>
             {/* Root route: SignIn screen */}
-            <Stack.Screen name="index" options={{ headerShown: false }} />
+            <Stack.Screen name="index" />
             
             {/* Tabs route */}
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="(tabs)" />
             
             {/* Not-found route */}
             <Stack.Screen name="+not-found" />

@@ -1,7 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View } from 'react-native';
-import { useColorScheme } from 'react-native';
-import { themes } from '@/assets/style/theme';
+import { useTheme } from '@/assets/style/ThemeProvider';
 import {
   Background,
   Container,
@@ -13,33 +12,53 @@ import {
   SignUpText,
   Button,
   InfoText,
+  ErrorText,
 } from '@/assets/style/Components';
 import { router } from 'expo-router';
 
 export default function SignIn() {
-  const colorScheme = useColorScheme(); 
-  const theme = colorScheme === 'dark' ? themes.dark : themes.light;
+  const { theme } = useTheme();
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  
+  const handleSignIn = () => {
+    // For demo purposes, using a simple admin check
+    if (username === 'admin' && password === 'admin123') {
+      router.push('/admin/dashboard');
+    } else if (username === 'driver' && password === 'driver123') {
+      router.push('/(tabs)');
+    } else {
+      setError('Invalid username or password');
+    }
+  };
+  
   return (
     <Background source={require('../assets/images/recycle-bin.png')} theme={theme}>
       <HelloText theme={theme}>Hello</HelloText>
       <TitleText theme={theme}>Sign In</TitleText>
 
       <Container theme={theme}>
-        <InfoText theme={theme}>Enter your number and password</InfoText>
+        <InfoText theme={theme}>Enter your username and password</InfoText>
         <Input
           placeholder="Enter your username here..."
-          placeholderTextColor={theme.secondary}
+          placeholderTextColor={theme.colors.text.secondary}
           theme={theme}
+          value={username}
+          onChangeText={setUsername}
         />
         <Input
           placeholder="Enter your Password here..."
-          placeholderTextColor={theme.secondary}
+          placeholderTextColor={theme.colors.text.secondary}
           secureTextEntry
           theme={theme}
+          value={password}
+          onChangeText={setPassword}
         />
+        {error ? <ErrorText theme={theme} visible={true}>{error}</ErrorText> : null}
 
-        <Button theme={theme}>
-          <ButtonText onPress={()=>{router.push('/(tabs)');}}>Sign In</ButtonText>
+        <Button theme={theme} onPress={handleSignIn}>
+          <ButtonText>Sign In</ButtonText>
         </Button>
 
         <FooterText theme={theme}>

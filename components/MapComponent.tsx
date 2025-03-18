@@ -251,22 +251,22 @@ const MapComponent: React.FC<MapComponentProps> = ({
 
   return (
     <MapContainer>
-      <WebView
-        ref={webViewRef}
-        originWhitelist={['*']}
-        javaScriptEnabled={true}
+    <WebView
+      ref={webViewRef}
+      originWhitelist={['*']}
+      javaScriptEnabled={true}
         onMessage={handleMessage}
-        source={{
-          html: `
-            <!DOCTYPE html>
-            <html>
-              <head>
-                <meta charset="utf-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Map</title>
-                <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-                <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-                <style>
+      source={{
+        html: `
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>Map</title>
+              <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+              <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+              <style>
                   body {
                     margin: 0;
                     padding: 0;
@@ -362,12 +362,12 @@ const MapComponent: React.FC<MapComponentProps> = ({
                       transform: translateY(-10px);
                     }
                   }
-                </style>
-              </head>
-              <body>
-                <div id="map"></div>
-                <script>
-                  const defaultCenter = ${JSON.stringify(defaultCenter)};
+              </style>
+            </head>
+            <body>
+              <div id="map"></div>
+              <script>
+                const defaultCenter = ${JSON.stringify(defaultCenter)};
                   const map = L.map('map', {
                     zoomControl: true,
                     scrollWheelZoom: true,
@@ -376,9 +376,9 @@ const MapComponent: React.FC<MapComponentProps> = ({
                   L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/${
                     isDarkMode ? 'dark_all' : 'voyager'
                   }/{z}/{x}/{y}{r}.png', {
-                    maxZoom: 19,
+                  maxZoom: 19,
                     attribution: '&copy; OpenStreetMap contributors'
-                  }).addTo(map);
+                }).addTo(map);
 
                   // Create user location marker
                   let userMarker = null;
@@ -426,10 +426,10 @@ const MapComponent: React.FC<MapComponentProps> = ({
                     });
                   };
 
-                  const markers = [];
-                  const locations = ${JSON.stringify(trashLocations)};
+                const markers = [];
+                const locations = ${JSON.stringify(trashLocations)};
                   
-                  locations.forEach(loc => {
+                locations.forEach(loc => {
                     const marker = L.marker([loc.coordinates[0], loc.coordinates[1]], {
                       icon: createCustomIcon(loc.status)
                     }).addTo(map);
@@ -448,8 +448,8 @@ const MapComponent: React.FC<MapComponentProps> = ({
                     });
                     
                     marker.coordinates = loc.coordinates;
-                    markers.push(marker);
-                  });
+                  markers.push(marker);
+                });
 
                   // Handle map clicks for location selection
                   map.on('click', function(e) {
@@ -491,15 +491,15 @@ const MapComponent: React.FC<MapComponentProps> = ({
                     document.getElementById('map').classList.remove('map-selecting');
                   }
 
-                  document.addEventListener('message', (event) => {
-                    const message = JSON.parse(event.data);
-                    if (message.type === 'navigateToLocation') {
-                      const selectedCoordinates = message.location.coordinates;
-                      const marker = markers.find(m => 
-                        m.coordinates[0] === selectedCoordinates[0] && 
-                        m.coordinates[1] === selectedCoordinates[1]
-                      );
-                      if (marker) {
+                document.addEventListener('message', (event) => {
+                  const message = JSON.parse(event.data);
+                  if (message.type === 'navigateToLocation') {
+                    const selectedCoordinates = message.location.coordinates;
+                    const marker = markers.find(m => 
+                      m.coordinates[0] === selectedCoordinates[0] && 
+                      m.coordinates[1] === selectedCoordinates[1]
+                    );
+                    if (marker) {
                         map.flyTo(selectedCoordinates, 16, {
                           duration: 1,
                           easeLinearity: 0.25
@@ -514,14 +514,14 @@ const MapComponent: React.FC<MapComponentProps> = ({
                         duration: 1,
                         easeLinearity: 0.25
                       });
-                    }
-                  });
-                </script>
-              </body>
-            </html>
-          `,
-        }}
-      />
+                  }
+                });
+              </script>
+            </body>
+          </html>
+        `,
+      }}
+    />
       {isSelectingLocation && (
         <SelectionMessage>
           <Ionicons 
