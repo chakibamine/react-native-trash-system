@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { ScrollView, Dimensions, Animated, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { ScrollView, Dimensions, Animated, TouchableOpacity, StyleSheet, View } from 'react-native';
 import styled from 'styled-components/native';
 import { useTheme } from '@/assets/style/ThemeProvider';
 import { Theme } from '@/assets/style/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import { format } from 'date-fns';
 
 // Define prop types for styled components
 type ThemeProps = {
@@ -180,20 +181,213 @@ const CountText = styled.Text`
   font-weight: bold;
 `;
 
+const ChartContainer = styled.View<ThemeProps>`
+  margin: 16px;
+  padding: 16px;
+  background-color: ${(props: ThemeProps) => props.theme.colors.surface};
+  border-radius: ${(props: ThemeProps) => props.theme.borderRadius.md}px;
+  elevation: 2;
+  shadow-color: ${(props: ThemeProps) => props.theme.colors.shadow.color};
+  shadow-offset: 0px 2px;
+  shadow-opacity: ${(props: ThemeProps) => props.theme.colors.shadow.opacity};
+  shadow-radius: 4px;
+`;
+
+const ChartTitle = styled.Text<ThemeProps>`
+  font-size: 18px;
+  font-weight: bold;
+  color: ${(props: ThemeProps) => props.theme.colors.text.primary};
+  margin-bottom: 16px;
+`;
+
+const StatGrid = styled.View`
+  flex-direction: row;
+  flex-wrap: wrap;
+  padding: 8px;
+  justify-content: space-between;
+`;
+
+const StatCardNew = styled.View<ThemeProps>`
+  width: 48%;
+  background-color: ${(props: ThemeProps) => props.theme.colors.surface};
+  border-radius: ${(props: ThemeProps) => props.theme.borderRadius.md}px;
+  padding: 16px;
+  margin-bottom: 16px;
+  elevation: 2;
+  shadow-color: ${(props: ThemeProps) => props.theme.colors.shadow.color};
+  shadow-offset: 0px 2px;
+  shadow-opacity: ${(props: ThemeProps) => props.theme.colors.shadow.opacity};
+  shadow-radius: 4px;
+`;
+
+const StatIcon = styled.View<ThemeProps>`
+  width: 40px;
+  height: 40px;
+  border-radius: 20px;
+  background-color: ${(props: ThemeProps) => `${props.theme.colors.primary}15`};
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 12px;
+`;
+
+const StatValueContainer = styled.View`
+  flex-direction: row;
+  align-items: flex-end;
+  margin-bottom: 4px;
+`;
+
+const StatValueNew = styled.Text<ThemeProps>`
+  font-size: 24px;
+  font-weight: bold;
+  color: ${(props: ThemeProps) => props.theme.colors.text.primary};
+`;
+
+const StatChange = styled.Text<{ isPositive: boolean }>`
+  font-size: 14px;
+  color: ${(props: { isPositive: boolean }) => props.isPositive ? '#4CAF50' : '#F44336'};
+  margin-left: 8px;
+  margin-bottom: 4px;
+`;
+
+const StatLabelNew = styled.Text<ThemeProps>`
+  font-size: 14px;
+  color: ${(props: ThemeProps) => props.theme.colors.text.secondary};
+`;
+
+const ProgressBar = styled.View<ThemeProps & { width: number }>`
+  height: 8px;
+  width: ${(props: ThemeProps & { width: number }) => props.width}%;
+  background-color: ${(props: ThemeProps & { width: number }) => props.theme.colors.primary};
+  border-radius: 4px;
+`;
+
+const ProgressBarContainer = styled.View<ThemeProps>`
+  height: 8px;
+  width: 100%;
+  background-color: ${(props: ThemeProps) => `${props.theme.colors.primary}15`};
+  border-radius: 4px;
+  margin-vertical: 8px;
+`;
+
+const ChartLegend = styled.View`
+  flex-direction: row;
+  flex-wrap: wrap;
+  margin-top: 16px;
+`;
+
+const LegendItem = styled.View`
+  flex-direction: row;
+  align-items: center;
+  margin-right: 16px;
+  margin-bottom: 8px;
+`;
+
+const LegendColor = styled.View<{ color: string }>`
+  width: 12px;
+  height: 12px;
+  border-radius: 6px;
+  background-color: ${(props: { color: string }) => props.color};
+  margin-right: 8px;
+`;
+
+const LegendText = styled.Text<ThemeProps>`
+  color: ${(props: ThemeProps) => props.theme.colors.text.secondary};
+  font-size: 12px;
+`;
+
+const BarChart = styled.View`
+  flex-direction: row;
+  align-items: flex-end;
+  height: 200px;
+  justify-content: space-between;
+  padding-bottom: 20px;
+`;
+
+const Bar = styled.View<{ height: number; color: string }>`
+  width: 30px;
+  height: ${(props: { height: number; color: string }) => props.height}%;
+  background-color: ${(props: { height: number; color: string }) => props.color};
+  border-radius: 4px;
+`;
+
+const BarLabel = styled.Text<ThemeProps>`
+  color: ${(props: ThemeProps) => props.theme.colors.text.secondary};
+  font-size: 12px;
+  margin-top: 8px;
+  text-align: center;
+`;
+
 export default function AdminDashboard() {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const [isOpen, setIsOpen] = useState(false);
   const [activeRoute, setActiveRoute] = useState('/admin/dashboard');
+  const screenWidth = Dimensions.get('window').width;
   
   const slideAnim = React.useRef(new Animated.Value(-SIDENAV_WIDTH)).current;
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
 
+  // Enhanced statistics with growth indicators
   const stats = {
-    totalUsers: 1250,
-    activeDrivers: 45,
-    totalAdmins: 8,
-    activeTrashBins: 156
+    users: {
+      total: 1250,
+      growth: 12.5,
+      active: 876,
+      newToday: 24
+    },
+    drivers: {
+      total: 45,
+      active: 38,
+      growth: 8.3,
+      completedTrips: 156
+    },
+    trashBins: {
+      total: 156,
+      full: 45,
+      needsMaintenance: 12,
+      collectedToday: 78
+    },
+    collections: {
+      total: 1876,
+      thisMonth: 246,
+      growth: 15.7,
+      efficiency: 92
+    }
+  };
+
+  // Chart data
+  const userGrowthData = [
+    { x: 'Jan', y: 850 },
+    { x: 'Feb', y: 920 },
+    { x: 'Mar', y: 1000 },
+    { x: 'Apr', y: 1120 },
+    { x: 'May', y: 1180 },
+    { x: 'Jun', y: 1250 }
+  ];
+
+  const weeklyData = [
+    { day: 'Mon', value: 65 },
+    { day: 'Tue', value: 78 },
+    { day: 'Wed', value: 82 },
+    { day: 'Thu', value: 75 },
+    { day: 'Fri', value: 68 },
+    { day: 'Sat', value: 55 },
+    { day: 'Sun', value: 42 }
+  ];
+
+  const maxValue = Math.max(...weeklyData.map(d => d.value));
+
+  const chartTheme = {
+    axis: {
+      style: {
+        grid: {
+          stroke: 'transparent'
+        },
+        tickLabels: {
+          fill: theme.colors.text.primary
+        }
+      }
+    }
   };
 
   const menuItems = [
@@ -205,25 +399,25 @@ export default function AdminDashboard() {
     {
       title: 'Manage Admins',
       icon: 'people',
-      count: stats.totalAdmins,
+      count: 8,
       route: '/admin/manage-admins'
     },
     {
       title: 'Manage Drivers',
       icon: 'car',
-      count: stats.activeDrivers,
+      count: stats.drivers.total,
       route: '/admin/manage-drivers'
     },
     {
       title: 'Manage Users',
       icon: 'person',
-      count: stats.totalUsers,
+      count: stats.users.total,
       route: '/admin/manage-users'
     },
     {
       title: 'Trash Bins',
       icon: 'trash',
-      count: stats.activeTrashBins,
+      count: stats.trashBins.total,
       route: '/admin/trash-bins'
     },
     {
@@ -356,28 +550,138 @@ export default function AdminDashboard() {
         </Header>
 
         <ScrollView>
-          <StatsContainer>
-            <StatsRow>
-              <StatCard theme={theme}>
-                <StatValue theme={theme}>{stats.totalUsers}</StatValue>
-                <StatLabel theme={theme}>Total Users</StatLabel>
-              </StatCard>
-              <StatCard theme={theme}>
-                <StatValue theme={theme}>{stats.activeDrivers}</StatValue>
-                <StatLabel theme={theme}>Active Drivers</StatLabel>
-              </StatCard>
-            </StatsRow>
-            <StatsRow>
-              <StatCard theme={theme}>
-                <StatValue theme={theme}>{stats.totalAdmins}</StatValue>
-                <StatLabel theme={theme}>Total Admins</StatLabel>
-              </StatCard>
-              <StatCard theme={theme}>
-                <StatValue theme={theme}>{stats.activeTrashBins}</StatValue>
-                <StatLabel theme={theme}>Active Bins</StatLabel>
-              </StatCard>
-            </StatsRow>
-          </StatsContainer>
+          <StatGrid>
+            <StatCardNew theme={theme}>
+              <StatIcon theme={theme}>
+                <Ionicons name="people" size={24} color={theme.colors.primary} />
+              </StatIcon>
+              <StatValueContainer>
+                <StatValueNew theme={theme}>{stats.users.total}</StatValueNew>
+                <StatChange isPositive={stats.users.growth > 0}>
+                  {stats.users.growth > 0 ? '+' : ''}{stats.users.growth}%
+                </StatChange>
+              </StatValueContainer>
+              <StatLabelNew theme={theme}>Total Users</StatLabelNew>
+              <ProgressBarContainer theme={theme}>
+                <ProgressBar theme={theme} width={(stats.users.active / stats.users.total) * 100} />
+              </ProgressBarContainer>
+            </StatCardNew>
+
+            <StatCardNew theme={theme}>
+              <StatIcon theme={theme}>
+                <Ionicons name="car" size={24} color={theme.colors.primary} />
+              </StatIcon>
+              <StatValueContainer>
+                <StatValueNew theme={theme}>{stats.drivers.active}</StatValueNew>
+                <StatChange isPositive={true}>
+                  {Math.round((stats.drivers.active / stats.drivers.total) * 100)}%
+                </StatChange>
+              </StatValueContainer>
+              <StatLabelNew theme={theme}>Active Drivers</StatLabelNew>
+              <ProgressBarContainer theme={theme}>
+                <ProgressBar theme={theme} width={(stats.drivers.active / stats.drivers.total) * 100} />
+              </ProgressBarContainer>
+            </StatCardNew>
+
+            <StatCardNew theme={theme}>
+              <StatIcon theme={theme}>
+                <Ionicons name="trash" size={24} color={theme.colors.primary} />
+              </StatIcon>
+              <StatValueContainer>
+                <StatValueNew theme={theme}>{stats.collections.thisMonth}</StatValueNew>
+                <StatChange isPositive={stats.collections.growth > 0}>
+                  {stats.collections.growth > 0 ? '+' : ''}{stats.collections.growth}%
+                </StatChange>
+              </StatValueContainer>
+              <StatLabelNew theme={theme}>Collections This Month</StatLabelNew>
+              <ProgressBarContainer theme={theme}>
+                <ProgressBar 
+                  theme={theme} 
+                  width={(stats.collections.thisMonth / (stats.collections.total / 12)) * 100} 
+                />
+              </ProgressBarContainer>
+            </StatCardNew>
+
+            <StatCardNew theme={theme}>
+              <StatIcon theme={theme}>
+                <Ionicons name="analytics" size={24} color={theme.colors.primary} />
+              </StatIcon>
+              <StatValueContainer>
+                <StatValueNew theme={theme}>{stats.collections.efficiency}%</StatValueNew>
+                <StatChange isPositive={true}>
+                  Efficient
+                </StatChange>
+              </StatValueContainer>
+              <StatLabelNew theme={theme}>Collection Efficiency</StatLabelNew>
+              <ProgressBarContainer theme={theme}>
+                <ProgressBar theme={theme} width={stats.collections.efficiency} />
+              </ProgressBarContainer>
+            </StatCardNew>
+          </StatGrid>
+
+          <ChartContainer theme={theme}>
+            <ChartTitle theme={theme}>Weekly Collections</ChartTitle>
+            <BarChart>
+              {weeklyData.map((item, index) => (
+                <View key={item.day} style={{ alignItems: 'center' }}>
+                  <Bar 
+                    height={(item.value / maxValue) * 80} 
+                    color={theme.colors.primary} 
+                  />
+                  <BarLabel theme={theme}>{item.day}</BarLabel>
+                </View>
+              ))}
+            </BarChart>
+          </ChartContainer>
+
+          <ChartContainer theme={theme}>
+            <ChartTitle theme={theme}>Bin Status Distribution</ChartTitle>
+            <View style={{ padding: 16 }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
+                <LegendText theme={theme}>Empty Bins</LegendText>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <StatValueNew theme={theme}>
+                    {stats.trashBins.total - stats.trashBins.full - stats.trashBins.needsMaintenance}
+                  </StatValueNew>
+                  <LegendText theme={theme}> / {stats.trashBins.total}</LegendText>
+                </View>
+              </View>
+              <ProgressBarContainer theme={theme}>
+                <ProgressBar 
+                  theme={theme} 
+                  width={((stats.trashBins.total - stats.trashBins.full - stats.trashBins.needsMaintenance) / stats.trashBins.total) * 100} 
+                />
+              </ProgressBarContainer>
+
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginVertical: 12 }}>
+                <LegendText theme={theme}>Full Bins</LegendText>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <StatValueNew theme={theme}>{stats.trashBins.full}</StatValueNew>
+                  <LegendText theme={theme}> / {stats.trashBins.total}</LegendText>
+                </View>
+              </View>
+              <ProgressBarContainer theme={theme}>
+                <ProgressBar 
+                  theme={theme} 
+                  width={(stats.trashBins.full / stats.trashBins.total) * 100} 
+                />
+              </ProgressBarContainer>
+
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginVertical: 12 }}>
+                <LegendText theme={theme}>Needs Maintenance</LegendText>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <StatValueNew theme={theme}>{stats.trashBins.needsMaintenance}</StatValueNew>
+                  <LegendText theme={theme}> / {stats.trashBins.total}</LegendText>
+                </View>
+              </View>
+              <ProgressBarContainer theme={theme}>
+                <ProgressBar 
+                  theme={theme} 
+                  width={(stats.trashBins.needsMaintenance / stats.trashBins.total) * 100} 
+                />
+              </ProgressBarContainer>
+            </View>
+          </ChartContainer>
         </ScrollView>
       </MainContent>
     </Container>
