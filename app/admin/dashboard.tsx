@@ -426,10 +426,15 @@ export default function AdminDashboard() {
       route: '/admin/reports'
     },
     {
+      title: 'Chat',
+      icon: 'chatbubble-ellipses',
+      route: '/chat'
+    },
+    {
       title: 'Settings',
       icon: 'settings',
       route: '/admin/settings'
-    }
+    },
   ];
 
   const toggleMenu = () => {

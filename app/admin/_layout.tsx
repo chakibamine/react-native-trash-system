@@ -10,6 +10,7 @@ export default function AdminLayout() {
       <Stack.Screen name="trash-bins" />
       <Stack.Screen name="reports" />
       <Stack.Screen name="settings" />
+      <Stack.Screen name="chat" />
     </Stack>
   );
 } 
