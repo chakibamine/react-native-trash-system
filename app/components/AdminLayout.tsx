@@ -1,21 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { ScrollView, Dimensions, Animated, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { Animated, TouchableOpacity, StyleSheet, ScrollView, Dimensions } from 'react-native';
 import styled from 'styled-components/native';
 import { useTheme } from '@/assets/style/ThemeProvider';
 import { Theme } from '@/assets/style/theme';
 import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-// Define prop types for styled components
 type ThemeProps = {
   theme: Theme;
 };
 
 const SIDENAV_WIDTH = 280;
-const { width: WINDOW_WIDTH } = Dimensions.get('window');
 
-// Styled components
 const Container = styled.View<ThemeProps>`
   flex: 1;
   background-color: ${(props: ThemeProps) => props.theme.colors.background};
@@ -39,84 +36,6 @@ const SideNav = styled(Animated.View)<ThemeProps>`
   shadow-offset: 0px 0px;
   shadow-opacity: 0.5;
   shadow-radius: 5px;
-`;
-
-const OverlayBackdrop = styled.View`
-  position: absolute;
-  left: 0;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  z-index: 999;
-`;
-
-const Header = styled.View<ThemeProps>`
-  padding: 16px;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-`;
-
-const MenuButton = styled.TouchableOpacity`
-  padding: 8px;
-`;
-
-const TitleContainer = styled.View`
-  flex-direction: row;
-  align-items: center;
-`;
-
-const WelcomeText = styled.Text<ThemeProps>`
-  font-size: 24px;
-  font-weight: normal;
-  color: ${(props: ThemeProps) => props.theme.colors.text.primary};
-`;
-
-const AdminText = styled.Text<ThemeProps>`
-  font-size: 24px;
-  font-weight: bold;
-  color: ${(props: ThemeProps) => props.theme.colors.primary};
-  margin-left: 8px;
-`;
-
-const NotificationButton = styled.TouchableOpacity`
-  padding: 8px;
-`;
-
-const StatsContainer = styled.ScrollView`
-  padding: 16px;
-`;
-
-const StatsRow = styled.View`
-  flex-direction: row;
-  justify-content: space-between;
-  margin-bottom: 16px;
-`;
-
-const StatCard = styled.TouchableOpacity<ThemeProps>`
-  flex: 1;
-  background-color: ${(props: ThemeProps) => props.theme.colors.surface};
-  border-radius: ${(props: ThemeProps) => props.theme.borderRadius.md}px;
-  padding: 16px;
-  margin: 0 8px;
-  elevation: 2;
-  shadow-color: ${(props: ThemeProps) => props.theme.colors.shadow.color};
-  shadow-offset: 0px 2px;
-  shadow-opacity: ${(props: ThemeProps) => props.theme.colors.shadow.opacity};
-  shadow-radius: 4px;
-`;
-
-const StatValue = styled.Text<ThemeProps>`
-  font-size: 24px;
-  font-weight: bold;
-  color: ${(props: ThemeProps) => props.theme.colors.primary};
-  margin-bottom: 4px;
-`;
-
-const StatLabel = styled.Text<ThemeProps>`
-  font-size: 14px;
-  color: ${(props: ThemeProps) => props.theme.colors.text.secondary};
 `;
 
 const SideNavHeader = styled.View<ThemeProps>`
@@ -180,14 +99,55 @@ const CountText = styled.Text`
   font-weight: bold;
 `;
 
-export default function AdminDashboard() {
+interface AdminLayoutProps {
+  children: React.ReactNode;
+  currentRoute: string;
+  isOpen: boolean;
+  onToggleMenu: () => void;
+}
+
+export default function AdminLayout({ 
+  children, 
+  currentRoute, 
+  isOpen,
+  onToggleMenu 
+}: AdminLayoutProps) {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
-  const [isOpen, setIsOpen] = useState(false);
-  const [activeRoute, setActiveRoute] = useState('/admin/dashboard');
-  
   const slideAnim = React.useRef(new Animated.Value(-SIDENAV_WIDTH)).current;
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
+
+  React.useEffect(() => {
+    if (isOpen) {
+      // Open menu
+      Animated.parallel([
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      // Close menu
+      Animated.parallel([
+        Animated.timing(slideAnim, {
+          toValue: -SIDENAV_WIDTH,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [isOpen]);
 
   const stats = {
     totalUsers: 1250,
@@ -238,43 +198,9 @@ export default function AdminDashboard() {
     }
   ];
 
-  const toggleMenu = () => {
-    if (isOpen) {
-      // Close menu
-      Animated.parallel([
-        Animated.timing(slideAnim, {
-          toValue: -SIDENAV_WIDTH,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.timing(fadeAnim, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-      ]).start(() => setIsOpen(false));
-    } else {
-      // Open menu
-      setIsOpen(true);
-      Animated.parallel([
-        Animated.timing(slideAnim, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    }
-  };
-
   const handleNavigation = (route: string) => {
-    setActiveRoute(route);
     router.push(route as any);
-    toggleMenu();
+    onToggleMenu();
   };
 
   return (
@@ -282,7 +208,7 @@ export default function AdminDashboard() {
       {isOpen && (
         <TouchableOpacity
           activeOpacity={1}
-          onPress={toggleMenu}
+          onPress={onToggleMenu}
           style={StyleSheet.absoluteFill}
         >
           <Animated.View
@@ -311,7 +237,7 @@ export default function AdminDashboard() {
             <SideNavTitle theme={theme}>Admin Panel</SideNavTitle>
             <SideNavSubtitle theme={theme}>Manage your application</SideNavSubtitle>
           </HeaderTitleContainer>
-          <CloseButton onPress={toggleMenu}>
+          <CloseButton onPress={onToggleMenu}>
             <Ionicons name="close" size={24} color={theme.colors.text.primary} />
           </CloseButton>
         </SideNavHeader>
@@ -320,15 +246,15 @@ export default function AdminDashboard() {
             <MenuItem
               key={item.route}
               onPress={() => handleNavigation(item.route)}
-              active={activeRoute === item.route}
+              active={currentRoute === item.route}
               theme={theme}
             >
               <Ionicons
                 name={item.icon as any}
                 size={24}
-                color={activeRoute === item.route ? theme.colors.primary : theme.colors.text.primary}
+                color={currentRoute === item.route ? theme.colors.primary : theme.colors.text.primary}
               />
-              <MenuItemText active={activeRoute === item.route} theme={theme}>
+              <MenuItemText active={currentRoute === item.route} theme={theme}>
                 {item.title}
               </MenuItemText>
               {item.count !== undefined && (
@@ -342,44 +268,8 @@ export default function AdminDashboard() {
       </SideNav>
 
       <MainContent theme={theme}>
-        <Header theme={theme}>
-          <MenuButton onPress={toggleMenu}>
-            <Ionicons name="menu" size={24} color={theme.colors.text.primary} />
-          </MenuButton>
-          <TitleContainer>
-            <WelcomeText theme={theme}>Welcome</WelcomeText>
-            <AdminText theme={theme}>Admin</AdminText>
-          </TitleContainer>
-          <NotificationButton>
-            <Ionicons name="notifications-outline" size={24} color={theme.colors.text.primary} />
-          </NotificationButton>
-        </Header>
-
-        <ScrollView>
-          <StatsContainer>
-            <StatsRow>
-              <StatCard theme={theme}>
-                <StatValue theme={theme}>{stats.totalUsers}</StatValue>
-                <StatLabel theme={theme}>Total Users</StatLabel>
-              </StatCard>
-              <StatCard theme={theme}>
-                <StatValue theme={theme}>{stats.activeDrivers}</StatValue>
-                <StatLabel theme={theme}>Active Drivers</StatLabel>
-              </StatCard>
-            </StatsRow>
-            <StatsRow>
-              <StatCard theme={theme}>
-                <StatValue theme={theme}>{stats.totalAdmins}</StatValue>
-                <StatLabel theme={theme}>Total Admins</StatLabel>
-              </StatCard>
-              <StatCard theme={theme}>
-                <StatValue theme={theme}>{stats.activeTrashBins}</StatValue>
-                <StatLabel theme={theme}>Active Bins</StatLabel>
-              </StatCard>
-            </StatsRow>
-          </StatsContainer>
-        </ScrollView>
+        {children}
       </MainContent>
     </Container>
   );
-}
+} 

@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import MapComponent from '@/components/MapComponent';
 import TrashList from '@/components/ui/TrashList';
+import AdminLayout from '../components/AdminLayout';
 
 // Define prop types for styled components
 type ThemeProps = {
@@ -28,7 +29,7 @@ const Header = styled.View<ThemeProps>`
   border-bottom-color: ${(props: ThemeProps) => props.theme.colors.border};
 `;
 
-const BackButton = styled.TouchableOpacity`
+const MenuButton = styled.TouchableOpacity`
   padding: 8px;
   margin-right: 8px;
 `;
@@ -53,6 +54,7 @@ interface Location {
 export default function TrashBinsScreen() {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   
   // List of trash locations with coordinates
   const [trashLocations, setTrashLocations] = useState<Location[]>([
@@ -79,37 +81,47 @@ export default function TrashBinsScreen() {
     setIsSelectingLocation(false);
   };
 
-  return (
-    <Container style={{ paddingTop: insets.top }}>
-      <Header>
-        <BackButton onPress={() => router.back()}>
-          <Ionicons
-            name="arrow-back"
-            size={24}
-            color={theme.colors.text.primary}
-          />
-        </BackButton>
-        <Title>Manage Trash Bins</Title>
-      </Header>
+  const toggleMenu = () => {
+    setIsMenuOpen(prev => !prev);
+  };
 
-      <MapContainer>
-        <MapComponent
-          selectedLocation={selectedLocation}
-          defaultCenter={defaultCenter}
-          trashLocations={trashLocations}
-          isDarkMode={theme.colors.background === '#121212'}
-          isSelectingLocation={isSelectingLocation}
-          onLocationSelect={handleLocationSelect}
-        />
-        <TrashList
-          trashLocations={trashLocations}
-          setSelectedLocation={setSelectedLocation}
-          onAddTrash={handleAddTrash}
-          isSelectingLocation={isSelectingLocation}
-          onStartLocationSelect={handleStartLocationSelect}
-          onLocationSelect={handleLocationSelect}
-        />
-      </MapContainer>
-    </Container>
+  return (
+    <AdminLayout 
+      currentRoute="/admin/trash-bins"
+      isOpen={isMenuOpen}
+      onToggleMenu={toggleMenu}
+    >
+      <Container style={{ paddingTop: insets.top }}>
+        <Header>
+          <MenuButton onPress={toggleMenu}>
+            <Ionicons
+              name="menu"
+              size={24}
+              color={theme.colors.text.primary}
+            />
+          </MenuButton>
+          <Title>Manage Trash Bins</Title>
+        </Header>
+
+        <MapContainer>
+          <MapComponent
+            selectedLocation={selectedLocation}
+            defaultCenter={defaultCenter}
+            trashLocations={trashLocations}
+            isDarkMode={theme.colors.background === '#121212'}
+            isSelectingLocation={isSelectingLocation}
+            onLocationSelect={handleLocationSelect}
+          />
+          <TrashList
+            trashLocations={trashLocations}
+            setSelectedLocation={setSelectedLocation}
+            onAddTrash={handleAddTrash}
+            isSelectingLocation={isSelectingLocation}
+            onStartLocationSelect={handleStartLocationSelect}
+            onLocationSelect={handleLocationSelect}
+          />
+        </MapContainer>
+      </Container>
+    </AdminLayout>
   );
 } 

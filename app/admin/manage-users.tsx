@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Role } from '@/types/user';
+import AdminLayout from '../components/AdminLayout';
 
 // Define prop types for styled components
 type ThemeProps = {
@@ -28,7 +29,7 @@ const Header = styled.View<ThemeProps>`
   border-bottom-color: ${(props: ThemeProps) => props.theme.colors.border};
 `;
 
-const BackButton = styled.TouchableOpacity`
+const MenuButton = styled.TouchableOpacity`
   padding: 8px;
   margin-right: 8px;
 `;
@@ -135,6 +136,7 @@ export default function ManageUsersScreen() {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const [searchQuery, setSearchQuery] = useState('');
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [users, setUsers] = useState<User[]>([
     {
       id: '1',
@@ -191,6 +193,10 @@ export default function ManageUsersScreen() {
     router.push('/admin/add-user');
   };
 
+  const toggleMenu = () => {
+    setIsMenuOpen(prev => !prev);
+  };
+
   const renderUserItem = ({ item }: { item: User }) => (
     <UserItem>
       <Avatar>
@@ -221,40 +227,46 @@ export default function ManageUsersScreen() {
   );
 
   return (
-    <Container style={{ paddingTop: insets.top }}>
-      <Header>
-        <BackButton onPress={() => router.back()}>
-          <Ionicons
-            name="arrow-back"
-            size={24}
-            color={theme.colors.text.primary}
-          />
-        </BackButton>
-        <Title>Manage Users</Title>
-        <AddButton onPress={handleAdd}>
-          <Ionicons
-            name="add"
-            size={24}
-            color={theme.colors.text.primary}
-          />
-        </AddButton>
-      </Header>
+    <AdminLayout 
+      currentRoute="/admin/manage-users"
+      isOpen={isMenuOpen}
+      onToggleMenu={toggleMenu}
+    >
+      <Container style={{ paddingTop: insets.top }}>
+        <Header>
+          <MenuButton onPress={toggleMenu}>
+            <Ionicons
+              name="menu"
+              size={24}
+              color={theme.colors.text.primary}
+            />
+          </MenuButton>
+          <Title>Manage Users</Title>
+          <AddButton onPress={handleAdd}>
+            <Ionicons
+              name="add"
+              size={24}
+              color={theme.colors.text.primary}
+            />
+          </AddButton>
+        </Header>
 
-      <SearchContainer>
-        <SearchInput
-          placeholder="Search users..."
-          placeholderTextColor={theme.colors.text.secondary}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
+        <SearchContainer>
+          <SearchInput
+            placeholder="Search users..."
+            placeholderTextColor={theme.colors.text.secondary}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        </SearchContainer>
+
+        <FlatList
+          data={filteredUsers}
+          renderItem={renderUserItem}
+          keyExtractor={item => item.id}
+          contentContainerStyle={{ paddingBottom: insets.bottom }}
         />
-      </SearchContainer>
-
-      <FlatList
-        data={filteredUsers}
-        renderItem={renderUserItem}
-        keyExtractor={item => item.id}
-        contentContainerStyle={{ paddingBottom: insets.bottom }}
-      />
-    </Container>
+      </Container>
+    </AdminLayout>
   );
 } 

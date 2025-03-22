@@ -6,6 +6,7 @@ import { Theme } from '@/assets/style/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, Href } from 'expo-router';
+import AdminLayout from '../components/AdminLayout';
 
 // Define prop types for styled components
 type ThemeProps = {
@@ -27,7 +28,7 @@ const Header = styled.View<ThemeProps>`
   border-bottom-color: ${(props: ThemeProps) => props.theme.colors.border};
 `;
 
-const BackButton = styled.TouchableOpacity`
+const MenuButton = styled.TouchableOpacity`
   padding: 8px;
   margin-right: 8px;
 `;
@@ -113,6 +114,7 @@ export default function ManageAdminsScreen() {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const [search, setSearch] = useState('');
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [admins, setAdmins] = useState<Admin[]>([
     {
       id: '1',
@@ -139,6 +141,10 @@ export default function ManageAdminsScreen() {
       status: 'inactive'
     }
   ]);
+
+  const toggleMenu = () => {
+    setIsMenuOpen(prev => !prev);
+  };
 
   const filteredAdmins = admins.filter(admin =>
     admin.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -190,45 +196,51 @@ export default function ManageAdminsScreen() {
   );
 
   return (
-    <Container style={{ paddingTop: insets.top }}>
-      <Header>
-        <BackButton onPress={() => router.back()}>
-          <Ionicons
-            name="arrow-back"
-            size={24}
-            color={theme.colors.text.primary}
-          />
-        </BackButton>
-        <Title>Manage Admins</Title>
-        <AddButton onPress={handleAdd}>
-          <Ionicons
-            name="add"
-            size={24}
-            color={theme.colors.primary}
-          />
-        </AddButton>
-      </Header>
+    <AdminLayout 
+      currentRoute="/admin/manage-admins"
+      isOpen={isMenuOpen}
+      onToggleMenu={toggleMenu}
+    >
+      <Container style={{ paddingTop: insets.top }}>
+        <Header>
+          <MenuButton onPress={toggleMenu}>
+            <Ionicons
+              name="menu"
+              size={24}
+              color={theme.colors.text.primary}
+            />
+          </MenuButton>
+          <Title>Manage Admins</Title>
+          <AddButton onPress={handleAdd}>
+            <Ionicons
+              name="add"
+              size={24}
+              color={theme.colors.primary}
+            />
+          </AddButton>
+        </Header>
 
-      <SearchContainer>
-        <Ionicons
-          name="search"
-          size={20}
-          color={theme.colors.text.secondary}
-        />
-        <SearchInput
-          placeholder="Search admins"
-          placeholderTextColor={theme.colors.text.secondary}
-          value={search}
-          onChangeText={setSearch}
-        />
-      </SearchContainer>
+        <SearchContainer>
+          <Ionicons
+            name="search"
+            size={20}
+            color={theme.colors.text.secondary}
+          />
+          <SearchInput
+            placeholder="Search admins"
+            placeholderTextColor={theme.colors.text.secondary}
+            value={search}
+            onChangeText={setSearch}
+          />
+        </SearchContainer>
 
-      <FlatList
-        data={filteredAdmins}
-        renderItem={renderAdmin}
-        keyExtractor={item => item.id}
-        showsVerticalScrollIndicator={false}
-      />
-    </Container>
+        <FlatList
+          data={filteredAdmins}
+          renderItem={renderAdmin}
+          keyExtractor={item => item.id}
+          showsVerticalScrollIndicator={false}
+        />
+      </Container>
+    </AdminLayout>
   );
 } 

@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, Href } from 'expo-router';
 import { Role } from '@/types/user';
+import AdminLayout from '../components/AdminLayout';
 
 // Define prop types for styled components
 type ThemeProps = {
@@ -28,7 +29,7 @@ const Header = styled.View<ThemeProps>`
   border-bottom-color: ${(props: ThemeProps) => props.theme.colors.border};
 `;
 
-const BackButton = styled.TouchableOpacity`
+const MenuButton = styled.TouchableOpacity`
   padding: 8px;
   margin-right: 8px;
 `;
@@ -130,6 +131,7 @@ export default function ManageDriversScreen() {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const [search, setSearch] = useState('');
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [drivers, setDrivers] = useState<Driver[]>([
     {
       id: '1',
@@ -196,6 +198,10 @@ export default function ManageDriversScreen() {
     router.push('/admin/add-driver' as Href);
   };
 
+  const toggleMenu = () => {
+    setIsMenuOpen(prev => !prev);
+  };
+
   const renderDriver = ({ item }: { item: Driver }) => (
     <DriverItem>
       <Avatar source={{ uri: item.avatar }} />
@@ -216,45 +222,51 @@ export default function ManageDriversScreen() {
   );
 
   return (
-    <Container style={{ paddingTop: insets.top }}>
-      <Header>
-        <BackButton onPress={() => router.back()}>
-          <Ionicons
-            name="arrow-back"
-            size={24}
-            color={theme.colors.text.primary}
-          />
-        </BackButton>
-        <Title>Manage Drivers</Title>
-        <AddButton onPress={handleAdd}>
-          <Ionicons
-            name="add"
-            size={24}
-            color={theme.colors.primary}
-          />
-        </AddButton>
-      </Header>
+    <AdminLayout 
+      currentRoute="/admin/manage-drivers"
+      isOpen={isMenuOpen}
+      onToggleMenu={toggleMenu}
+    >
+      <Container style={{ paddingTop: insets.top }}>
+        <Header>
+          <MenuButton onPress={toggleMenu}>
+            <Ionicons
+              name="menu"
+              size={24}
+              color={theme.colors.text.primary}
+            />
+          </MenuButton>
+          <Title>Manage Drivers</Title>
+          <AddButton onPress={handleAdd}>
+            <Ionicons
+              name="add"
+              size={24}
+              color={theme.colors.primary}
+            />
+          </AddButton>
+        </Header>
 
-      <SearchContainer>
-        <Ionicons
-          name="search"
-          size={20}
-          color={theme.colors.text.secondary}
-        />
-        <SearchInput
-          placeholder="Search drivers"
-          placeholderTextColor={theme.colors.text.secondary}
-          value={search}
-          onChangeText={setSearch}
-        />
-      </SearchContainer>
+        <SearchContainer>
+          <Ionicons
+            name="search"
+            size={20}
+            color={theme.colors.text.secondary}
+          />
+          <SearchInput
+            placeholder="Search drivers"
+            placeholderTextColor={theme.colors.text.secondary}
+            value={search}
+            onChangeText={setSearch}
+          />
+        </SearchContainer>
 
-      <FlatList
-        data={filteredDrivers}
-        renderItem={renderDriver}
-        keyExtractor={item => item.id}
-        showsVerticalScrollIndicator={false}
-      />
-    </Container>
+        <FlatList
+          data={filteredDrivers}
+          renderItem={renderDriver}
+          keyExtractor={item => item.id}
+          showsVerticalScrollIndicator={false}
+        />
+      </Container>
+    </AdminLayout>
   );
 } 
