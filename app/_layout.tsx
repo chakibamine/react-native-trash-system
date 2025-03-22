@@ -58,6 +58,13 @@ function RootLayoutNav() {
             {/* Tabs route */}
             <Stack.Screen name="(tabs)" />
             
+            {/* Admin routes */}
+            <Stack.Screen name="admin/dashboard" options={{ headerShown: false }} />
+            <Stack.Screen name="admin/profile" options={{ headerShown: false }} />
+            <Stack.Screen name="admin/change-password" options={{ headerShown: false }} />
+            <Stack.Screen name="admin/settings" options={{ headerShown: false }} />
+            <Stack.Screen name="admin/notifications" options={{ headerShown: false }} />
+            
             {/* Not-found route */}
             <Stack.Screen name="+not-found" />
             

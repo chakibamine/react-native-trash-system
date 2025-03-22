@@ -471,6 +471,10 @@ export default function AdminDashboard() {
     toggleMenu();
   };
 
+  const handleNotificationPress = () => {
+    router.push('/admin/notifications');
+  };
+
   return (
     <Container style={{ paddingTop: insets.top }} theme={theme}>
       {isOpen && (
@@ -544,7 +548,7 @@ export default function AdminDashboard() {
             <WelcomeText theme={theme}>Welcome</WelcomeText>
             <AdminText theme={theme}>Admin</AdminText>
           </TitleContainer>
-          <NotificationButton>
+          <NotificationButton onPress={handleNotificationPress}>
             <Ionicons name="notifications-outline" size={24} color={theme.colors.text.primary} />
           </NotificationButton>
         </Header>
