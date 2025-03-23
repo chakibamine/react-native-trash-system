@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import MapComponent from '@/components/MapComponent';
 import TrashList from '@/components/ui/TrashList';
-import AdminLayout from '../components/AdminLayout';
+import AdminLayout from '../../components/AdminLayout';
 
 // Define prop types for styled components
 type ThemeProps = {

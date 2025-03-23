@@ -175,6 +175,18 @@ export default function AdminLayout({
       route: '/admin/manage-drivers'
     },
     {
+      title: 'Manage Trucks',
+      icon: 'car-outline',
+      count: 35,
+      route: '/admin/manage-trucks'
+    },
+    {
+      title: 'Manage Routes',
+      icon: 'map',
+      count: 28,
+      route: '/admin/manage-routes'
+    },
+    {
       title: 'Manage Users',
       icon: 'person',
       count: stats.totalUsers,

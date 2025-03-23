@@ -77,7 +77,7 @@ const SearchInput = styled.TextInput<ThemeProps>`
   font-size: ${Platform.OS === 'ios' ? '15' : '16'}px;
 `;
 
-const AdminItem = styled.View<ThemeProps>`
+const RouteItem = styled.View<ThemeProps>`
   flex-direction: row;
   align-items: center;
   padding: ${Platform.OS === 'ios' ? '12px 16px' : '16px'};
@@ -87,24 +87,27 @@ const AdminItem = styled.View<ThemeProps>`
     Platform.OS === 'ios' ? props.theme.colors.border + '80' : props.theme.colors.border};
 `;
 
-const Avatar = styled.Image`
+const RouteIcon = styled.View<ThemeProps>`
   width: ${Platform.OS === 'ios' ? '40px' : '50px'};
   height: ${Platform.OS === 'ios' ? '40px' : '50px'};
   border-radius: ${Platform.OS === 'ios' ? '20' : '25'}px;
   margin-right: ${Platform.OS === 'ios' ? '10px' : '12px'};
+  background-color: ${(props: ThemeProps) => props.theme.colors.primary + '20'};
+  justify-content: center;
+  align-items: center;
 `;
 
-const AdminInfo = styled.View`
+const RouteInfo = styled.View`
   flex: 1;
 `;
 
-const AdminName = styled.Text<ThemeProps>`
+const RouteName = styled.Text<ThemeProps>`
   font-size: ${Platform.OS === 'ios' ? '15' : '16'}px;
   font-weight: ${Platform.OS === 'ios' ? '600' : '600'};
   color: ${(props: ThemeProps) => props.theme.colors.text.primary};
 `;
 
-const AdminEmail = styled.Text<ThemeProps>`
+const RouteDetails = styled.Text<ThemeProps>`
   font-size: ${Platform.OS === 'ios' ? '13' : '14'}px;
   color: ${(props: ThemeProps) => props.theme.colors.text.secondary};
   margin-top: ${Platform.OS === 'ios' ? '1' : '2'}px;
@@ -115,44 +118,65 @@ const ActionButton = styled.TouchableOpacity`
   margin-left: 8px;
 `;
 
-interface Admin {
+interface Bin {
   id: string;
-  name: string;
-  email: string;
-  avatar: string;
-  role: 'super_admin' | 'admin';
-  status: 'active' | 'inactive';
+  location: string;
 }
 
-export default function ManageAdminsScreen() {
+interface Route {
+  id: string;
+  routeName: string;
+  assignedTruckId: string;
+  assignedTruck?: string;
+  assignedDriverId: string;
+  assignedDriver?: string;
+  bins: Bin[];
+}
+
+export default function ManageRoutesScreen() {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const [search, setSearch] = useState('');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [admins, setAdmins] = useState<Admin[]>([
+  const [routes, setRoutes] = useState<Route[]>([
     {
       id: '1',
-      name: 'John Doe',
-      email: 'john@example.com',
-      avatar: 'https://ui-avatars.com/api/?name=John+Doe&background=random',
-      role: 'super_admin',
-      status: 'active'
+      routeName: 'Downtown Route',
+      assignedTruckId: 'TRK-001',
+      assignedTruck: 'Garbage Truck 1',
+      assignedDriverId: 'DRV-001',
+      assignedDriver: 'John Doe',
+      bins: [
+        { id: 'BIN-001', location: 'Main St & 1st Ave' },
+        { id: 'BIN-002', location: 'Center Plaza' },
+        { id: 'BIN-003', location: '5th Ave & Oak St' }
+      ]
     },
     {
       id: '2',
-      name: 'Jane Smith',
-      email: 'jane@example.com',
-      avatar: 'https://ui-avatars.com/api/?name=Jane+Smith&background=random',
-      role: 'admin',
-      status: 'active'
+      routeName: 'Residential Area',
+      assignedTruckId: 'TRK-002',
+      assignedTruck: 'Garbage Truck 2',
+      assignedDriverId: 'DRV-002',
+      assignedDriver: 'Jane Smith',
+      bins: [
+        { id: 'BIN-004', location: 'Maple Street' },
+        { id: 'BIN-005', location: 'Pine Road' },
+        { id: 'BIN-006', location: 'Oak Boulevard' }
+      ]
     },
     {
       id: '3',
-      name: 'Mike Johnson',
-      email: 'mike@example.com',
-      avatar: 'https://ui-avatars.com/api/?name=Mike+Johnson&background=random',
-      role: 'admin',
-      status: 'inactive'
+      routeName: 'Commercial Zone',
+      assignedTruckId: 'TRK-003',
+      assignedTruck: 'Garbage Truck 3',
+      assignedDriverId: 'DRV-003',
+      assignedDriver: 'Mike Johnson',
+      bins: [
+        { id: 'BIN-007', location: 'Business Park' },
+        { id: 'BIN-008', location: 'Mall Complex' },
+        { id: 'BIN-009', location: 'Office Buildings' }
+      ]
     }
   ]);
 
@@ -160,19 +184,20 @@ export default function ManageAdminsScreen() {
     setIsMenuOpen(prev => !prev);
   };
 
-  const filteredAdmins = admins.filter(admin =>
-    admin.name.toLowerCase().includes(search.toLowerCase()) ||
-    admin.email.toLowerCase().includes(search.toLowerCase())
+  const filteredRoutes = routes.filter(route =>
+    route.routeName.toLowerCase().includes(search.toLowerCase()) ||
+    route.assignedDriver?.toLowerCase().includes(search.toLowerCase()) ||
+    route.assignedTruck?.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleEdit = (admin: Admin) => {
-    router.push(`/admin/edit-admin?id=${admin.id}`);
+  const handleEdit = (route: Route) => {
+    router.push(`/admin/edit-route?id=${route.id}`);
   };
 
-  const handleDelete = (admin: Admin) => {
+  const handleDelete = (route: Route) => {
     Alert.alert(
-      'Delete Admin',
-      `Are you sure you want to delete ${admin.name}?`,
+      'Delete Route',
+      `Are you sure you want to delete ${route.routeName}?`,
       [
         {
           text: 'Cancel',
@@ -182,7 +207,7 @@ export default function ManageAdminsScreen() {
           text: 'Delete',
           style: 'destructive',
           onPress: () => {
-            setAdmins(prev => prev.filter(a => a.id !== admin.id));
+            setRoutes(prev => prev.filter(r => r.id !== route.id));
           }
         }
       ]
@@ -190,32 +215,36 @@ export default function ManageAdminsScreen() {
   };
 
   const handleAdd = () => {
-    router.push('/admin/add-admin' as Href);
+    router.push('/admin/add-route' as Href);
   };
 
-  const renderAdmin = ({ item }: { item: Admin }) => (
-    <AdminItem>
-      <Avatar source={{ uri: item.avatar }} />
-      <AdminInfo>
-        <AdminName>{item.name}</AdminName>
-        <AdminEmail>{item.email}</AdminEmail>
-      </AdminInfo>
+  const renderRoute = ({ item }: { item: Route }) => (
+    <RouteItem>
+      <RouteIcon>
+        <Ionicons name="map" size={24} color={theme.colors.primary} />
+      </RouteIcon>
+      <RouteInfo>
+        <RouteName>{item.routeName}</RouteName>
+        <RouteDetails>Truck: {item.assignedTruck}</RouteDetails>
+        <RouteDetails>Driver: {item.assignedDriver}</RouteDetails>
+        <RouteDetails>Bins: {item.bins.length}</RouteDetails>
+      </RouteInfo>
       <ActionButton onPress={() => handleEdit(item)}>
         <Ionicons name="pencil" size={20} color={theme.colors.primary} />
       </ActionButton>
       <ActionButton onPress={() => handleDelete(item)}>
         <Ionicons name="trash" size={20} color={theme.colors.text.secondary} />
       </ActionButton>
-    </AdminItem>
+    </RouteItem>
   );
 
   return (
     <AdminLayout 
-      currentRoute="/admin/manage-admins"
+      currentRoute="/admin/manage-routes"
       isOpen={isMenuOpen}
       onToggleMenu={toggleMenu}
     >
-      <Container >
+      <Container>
         {Platform.OS === 'ios' && (
           <BlurHeader intensity={80} tint={theme.colors.background === '#000000' ? 'dark' : 'light'} />
         )}
@@ -227,7 +256,7 @@ export default function ManageAdminsScreen() {
               color={theme.colors.text.primary}
             />
           </MenuButton>
-          <Title>Manage Admins</Title>
+          <Title>Manage Routes</Title>
           <AddButton onPress={handleAdd}>
             <Ionicons
               name={Platform.OS === 'ios' ? 'add-circle' : 'add'}
@@ -244,7 +273,7 @@ export default function ManageAdminsScreen() {
             color={theme.colors.text.secondary}
           />
           <SearchInput
-            placeholder="Search admins"
+            placeholder="Search routes"
             placeholderTextColor={theme.colors.text.secondary}
             value={search}
             onChangeText={setSearch}
@@ -254,8 +283,8 @@ export default function ManageAdminsScreen() {
         </SearchContainer>
 
         <FlatList
-          data={filteredAdmins}
-          renderItem={renderAdmin}
+          data={filteredRoutes}
+          renderItem={renderRoute}
           keyExtractor={item => item.id}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{

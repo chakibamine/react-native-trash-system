@@ -341,6 +341,12 @@ export default function AdminDashboard() {
       growth: 8.3,
       completedTrips: 156
     },
+    trucks: {
+      total: 35,
+      active: 28,
+      maintenance: 5,
+      inactive: 2
+    },
     trashBins: {
       total: 156,
       full: 45,
@@ -407,6 +413,12 @@ export default function AdminDashboard() {
       icon: 'car',
       count: stats.drivers.total,
       route: '/admin/manage-drivers'
+    },
+    {
+      title: 'Manage Trucks',
+      icon: 'car-outline',
+      count: stats.trucks.total,
+      route: '/admin/manage-trucks'
     },
     {
       title: 'Manage Users',
@@ -594,6 +606,22 @@ export default function AdminDashboard() {
 
             <StatCardNew theme={theme}>
               <StatIcon theme={theme}>
+                <Ionicons name="car-outline" size={24} color={theme.colors.primary} />
+              </StatIcon>
+              <StatValueContainer>
+                <StatValueNew theme={theme}>{stats.trucks.active}</StatValueNew>
+                <StatChange isPositive={stats.trucks.maintenance === 0}>
+                  {Math.round((stats.trucks.active / stats.trucks.total) * 100)}%
+                </StatChange>
+              </StatValueContainer>
+              <StatLabelNew theme={theme}>Active Trucks</StatLabelNew>
+              <ProgressBarContainer theme={theme}>
+                <ProgressBar theme={theme} width={(stats.trucks.active / stats.trucks.total) * 100} />
+              </ProgressBarContainer>
+            </StatCardNew>
+
+            <StatCardNew theme={theme}>
+              <StatIcon theme={theme}>
                 <Ionicons name="trash" size={24} color={theme.colors.primary} />
               </StatIcon>
               <StatValueContainer>
@@ -608,22 +636,6 @@ export default function AdminDashboard() {
                   theme={theme} 
                   width={(stats.collections.thisMonth / (stats.collections.total / 12)) * 100} 
                 />
-              </ProgressBarContainer>
-            </StatCardNew>
-
-            <StatCardNew theme={theme}>
-              <StatIcon theme={theme}>
-                <Ionicons name="analytics" size={24} color={theme.colors.primary} />
-              </StatIcon>
-              <StatValueContainer>
-                <StatValueNew theme={theme}>{stats.collections.efficiency}%</StatValueNew>
-                <StatChange isPositive={true}>
-                  Efficient
-                </StatChange>
-              </StatValueContainer>
-              <StatLabelNew theme={theme}>Collection Efficiency</StatLabelNew>
-              <ProgressBarContainer theme={theme}>
-                <ProgressBar theme={theme} width={stats.collections.efficiency} />
               </ProgressBarContainer>
             </StatCardNew>
           </StatGrid>
