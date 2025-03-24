@@ -1,11 +1,13 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { DarkTheme, DefaultTheme, ThemeProvider as NavigationThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
-import { SplashScreen, Stack } from 'expo-router';
-import { useEffect } from 'react';
+import { SplashScreen, Stack, Slot } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { useColorScheme } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ThemeProvider } from '@/assets/style/ThemeProvider';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Onboarding from '@/components/Onboarding';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -21,27 +23,55 @@ export const unstable_settings = {
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
+  const [isFirstLaunch, setIsFirstLaunch] = useState<boolean | null>(null);
   const [loaded, error] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
     ...FontAwesome.font,
   });
 
-  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
   useEffect(() => {
     if (error) throw error;
   }, [error]);
 
   useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
+    async function prepare() {
+      try {
+        const hasSeenOnboarding = await AsyncStorage.getItem('hasSeenOnboarding');
+        setIsFirstLaunch(hasSeenOnboarding !== 'true');
+      } catch (e) {
+        console.warn('Error reading onboarding status:', e);
+        setIsFirstLaunch(true);
+      } finally {
+        if (loaded) {
+          await SplashScreen.hideAsync();
+        }
+      }
     }
+
+    prepare();
   }, [loaded]);
 
-  if (!loaded) {
-    return null;
+  if (!loaded || isFirstLaunch === null) {
+    return <Slot />;
   }
 
-  return <RootLayoutNav />;
+  if (isFirstLaunch) {
+    return (
+      <ThemeProvider>
+        <Onboarding setIsFirstLaunch={setIsFirstLaunch} />
+      </ThemeProvider>
+    );
+  }
+
+  return (
+    <ThemeProvider>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+        <Stack.Screen name="(app)" options={{ headerShown: false }} />
+        <Stack.Screen name="admin" options={{ headerShown: false }} />
+      </Stack>
+    </ThemeProvider>
+  );
 }
 
 function RootLayoutNav() {

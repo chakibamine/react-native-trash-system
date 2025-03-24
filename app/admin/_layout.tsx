@@ -21,7 +21,6 @@ export default function AdminLayout() {
       <Stack.Screen name="manage-users" />
       <Stack.Screen name="manage-drivers" />
       <Stack.Screen name="manage-trucks" />
-      <Stack.Screen name="manage-routes" />
       <Stack.Screen name="trash-bins" />
       <Stack.Screen name="add-admin" />
       <Stack.Screen name="edit-admin" />
@@ -31,8 +30,6 @@ export default function AdminLayout() {
       <Stack.Screen name="edit-driver" />
       <Stack.Screen name="add-truck" />
       <Stack.Screen name="edit-truck" />
-      <Stack.Screen name="add-route" />
-      <Stack.Screen name="edit-route" />
     </Stack>
   );
 } 
