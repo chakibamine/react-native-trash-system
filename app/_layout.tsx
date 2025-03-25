@@ -1,13 +1,14 @@
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { DarkTheme, DefaultTheme, ThemeProvider as NavigationThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
-import { SplashScreen, Stack, Slot } from 'expo-router';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useColorScheme } from 'react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { Stack } from 'expo-router';
+import { useFonts } from 'expo-font';
+import { SplashScreen } from 'expo-router';
 import { ThemeProvider } from '@/assets/style/ThemeProvider';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Onboarding from '@/components/Onboarding';
+import { DarkTheme, DefaultTheme } from '@react-navigation/native';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -52,7 +53,7 @@ export default function RootLayout() {
   }, [loaded]);
 
   if (!loaded || isFirstLaunch === null) {
-    return <Slot />;
+    return null;
   }
 
   if (isFirstLaunch) {
@@ -64,44 +65,13 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-        <Stack.Screen name="(app)" options={{ headerShown: false }} />
-        <Stack.Screen name="admin" options={{ headerShown: false }} />
-      </Stack>
-    </ThemeProvider>
-  );
-}
-
-function RootLayoutNav() {
-  const colorScheme = useColorScheme();
-
-  return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ThemeProvider>
-        <NavigationThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <Stack screenOptions={{ headerShown: false }}>
-            {/* Root route: SignIn screen */}
-            <Stack.Screen name="index" />
-            
-            {/* Tabs route */}
-            <Stack.Screen name="(tabs)" />
-            
-            {/* Admin routes */}
-            <Stack.Screen name="admin/dashboard" options={{ headerShown: false }} />
-            <Stack.Screen name="admin/profile" options={{ headerShown: false }} />
-            <Stack.Screen name="admin/change-password" options={{ headerShown: false }} />
-            <Stack.Screen name="admin/settings" options={{ headerShown: false }} />
-            <Stack.Screen name="admin/notifications" options={{ headerShown: false }} />
-            
-            {/* Not-found route */}
-            <Stack.Screen name="+not-found" />
-            
-            {/* Modal route */}
-            <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-          </Stack>
-        </NavigationThemeProvider>
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+          <Stack.Screen name="(app)" options={{ headerShown: false }} />
+          <Stack.Screen name="admin" options={{ headerShown: false }} />
+        </Stack>
       </ThemeProvider>
     </GestureHandlerRootView>
   );

@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { View, FlatList, Platform } from 'react-native';
+import { View, FlatList, Platform, Animated } from 'react-native';
 import styled from 'styled-components/native';
-import { useTheme } from '@react-navigation/native';
+import { useTheme } from '@/assets/style/ThemeProvider';
 import { Theme } from '@/assets/style/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import {
   PlatformContainer,
   PlatformHeader,
@@ -24,40 +25,131 @@ interface ThemeProps {
 }
 
 const SearchContainer = styled.View<ThemeProps>`
-  padding: 8px 0;
-  background-color: ${(props: ThemeProps) => props.theme.colors.background};
+  margin: 16px;
+  background-color: ${({ theme }: ThemeProps) => theme.colors.surface};
+  border-radius: 12px;
+  padding: 0 12px;
+  flex-direction: row;
+  align-items: center;
+  elevation: 2;
+  shadow-color: ${({ theme }: ThemeProps) => theme.colors.shadow.color};
+  shadow-offset: 0px 2px;
+  shadow-opacity: ${({ theme }: ThemeProps) => theme.colors.shadow.opacity};
+  shadow-radius: 4px;
 `;
 
-const MenuButton = styled.TouchableOpacity`
-  padding: 8px;
+const SearchInput = styled.TextInput<ThemeProps>`
+  flex: 1;
+  height: 44px;
+  color: ${({ theme }: ThemeProps) => theme.colors.text.primary};
+  font-size: 16px;
+  margin-left: 8px;
+`;
+
+const MenuButton = styled.TouchableOpacity<ThemeProps>`
+  padding: 12px;
   margin-right: 8px;
+  background-color: ${({ theme }: ThemeProps) => theme.colors.surface};
+  border-radius: 12px;
 `;
 
-const NewChatButton = styled.TouchableOpacity`
-  padding: 8px;
+const NewChatButton = styled.TouchableOpacity<ThemeProps>`
+  position: absolute;
+  bottom: 24px;
+  right: 24px;
+  width: 60px;
+  height: 60px;
+  background-color: ${({ theme }: ThemeProps) => theme.colors.primary};
+  border-radius: 30px;
+  justify-content: center;
+  align-items: center;
+  elevation: 5;
+  shadow-color: ${({ theme }: ThemeProps) => theme.colors.shadow.color};
+  shadow-offset: 0px 3px;
+  shadow-opacity: 0.3;
+  shadow-radius: 6px;
+`;
+
+const ChatListContainer = styled.View<ThemeProps>`
+  flex: 1;
+  background-color: ${({ theme }: ThemeProps) => theme.colors.background};
+`;
+
+const ChatItem = styled.TouchableOpacity<ThemeProps>`
+  flex-direction: row;
+  padding: 16px;
+  margin: 8px 16px;
+  background-color: ${({ theme }: ThemeProps) => theme.colors.surface};
+  border-radius: 16px;
+  align-items: center;
+  elevation: 2;
+  shadow-color: ${({ theme }: ThemeProps) => theme.colors.shadow.color};
+  shadow-offset: 0px 2px;
+  shadow-opacity: ${({ theme }: ThemeProps) => theme.colors.shadow.opacity};
+  shadow-radius: 4px;
+`;
+
+const Avatar = styled.Image`
+  width: 50px;
+  height: 50px;
+  border-radius: 25px;
+  margin-right: 12px;
 `;
 
 const ChatInfo = styled.View`
   flex: 1;
-  margin-left: 12px;
 `;
 
-const ChatName = styled(PlatformText)<ThemeProps>`
+const ChatName = styled.Text<ThemeProps>`
   font-size: 16px;
   font-weight: 600;
-  color: ${(props: ThemeProps) => props.theme.colors.text};
+  color: ${({ theme }: ThemeProps) => theme.colors.text.primary};
+  margin-bottom: 4px;
 `;
 
-const LastMessage = styled(PlatformText)<ThemeProps>`
+const LastMessage = styled.Text<ThemeProps>`
   font-size: 14px;
-  color: ${(props: ThemeProps) => props.theme.colors.text};
-  opacity: 0.7;
+  color: ${({ theme }: ThemeProps) => theme.colors.text.secondary};
 `;
 
-const TimeText = styled(PlatformText)<ThemeProps>`
+const TimeContainer = styled.View`
+  align-items: flex-end;
+`;
+
+const TimeText = styled.Text<ThemeProps>`
   font-size: 12px;
-  color: ${(props: ThemeProps) => props.theme.colors.text};
-  opacity: 0.5;
+  color: ${({ theme }: ThemeProps) => theme.colors.text.secondary};
+  margin-bottom: 4px;
+`;
+
+const UnreadBadge = styled.View<ThemeProps>`
+  background-color: ${({ theme }: ThemeProps) => theme.colors.primary};
+  border-radius: 10px;
+  min-width: 20px;
+  height: 20px;
+  justify-content: center;
+  align-items: center;
+  padding: 0 6px;
+`;
+
+const UnreadText = styled.Text`
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+`;
+
+const EmptyListContainer = styled.View`
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+  padding: 32px;
+`;
+
+const EmptyListText = styled.Text<ThemeProps>`
+  font-size: 16px;
+  color: ${({ theme }: ThemeProps) => theme.colors.text.secondary};
+  text-align: center;
+  margin-top: 16px;
 `;
 
 interface Chat {
@@ -69,107 +161,112 @@ interface Chat {
   unreadCount: number;
 }
 
+const initialChats: Chat[] = [
+  {
+    id: '1',
+    name: 'John Doe',
+    lastMessage: 'Hey, how are you doing?',
+    time: '10:30 AM',
+    avatar: 'https://i.pravatar.cc/150?img=1',
+    unreadCount: 2,
+  },
+  {
+    id: '2',
+    name: 'Jane Smith',
+    lastMessage: 'We\'ll meet tomorrow at 9',
+    time: 'Yesterday',
+    avatar: 'https://i.pravatar.cc/150?img=2',
+    unreadCount: 0,
+  },
+  {
+    id: '3',
+    name: 'Team Chat',
+    lastMessage: 'New project updates available',
+    time: 'Yesterday',
+    avatar: 'https://i.pravatar.cc/150?img=3',
+    unreadCount: 5,
+  },
+];
+
 export default function ChatListScreen() {
-  const theme = useTheme();
+  const { theme } = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [search, setSearch] = useState('');
-  const [chats] = useState<Chat[]>([
-    {
-      id: '1',
-      name: 'John Doe',
-      lastMessage: 'Hey, how are you?',
-      time: '2m ago',
-      avatar: 'https://ui-avatars.com/api/?name=John+Doe&background=random',
-      unreadCount: 2
-    },
-    {
-      id: '2',
-      name: 'Jane Smith',
-      lastMessage: 'See you tomorrow!',
-      time: '1h ago',
-      avatar: 'https://ui-avatars.com/api/?name=Jane+Smith&background=random',
-      unreadCount: 0
-    },
-    {
-      id: '3',
-      name: 'Mike Johnson',
-      lastMessage: 'Thanks for your help',
-      time: '2h ago',
-      avatar: 'https://ui-avatars.com/api/?name=Mike+Johnson&background=random',
-      unreadCount: 1
-    }
-  ]);
+  const [chats] = useState<Chat[]>(initialChats);
 
   const filteredChats = chats.filter(chat =>
     chat.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleChatPress = (chatId: string) => {
-    router.push(`/chat/${chatId}`);
-  };
-
-  const handleNewChat = () => {
-    router.push('/chat/new');
-  };
-
-  const renderChat = ({ item }: { item: Chat }) => (
-    <PlatformListItem onPress={() => handleChatPress(item.id)}>
-      <PlatformAvatar source={{ uri: item.avatar }} />
-      <ChatInfo>
-        <ChatName>{item.name}</ChatName>
-        <LastMessage>{item.lastMessage}</LastMessage>
-      </ChatInfo>
-      <TimeText>{item.time}</TimeText>
-      {item.unreadCount > 0 && (
-        <View style={{
-          backgroundColor: theme.colors.primary,
-          borderRadius: Platform.OS === 'ios' ? 10 : 12,
-          minWidth: Platform.OS === 'ios' ? 20 : 24,
-          height: Platform.OS === 'ios' ? 20 : 24,
-          justifyContent: 'center',
-          alignItems: 'center',
-          marginLeft: 8
-        }}>
-          <PlatformText style={{ color: '#FFFFFF', fontSize: Platform.OS === 'ios' ? 12 : 13 }}>
-            {item.unreadCount}
-          </PlatformText>
-        </View>
-      )}
-    </PlatformListItem>
+  const renderEmptyList = () => (
+    <EmptyListContainer>
+      <Ionicons name="chatbubbles-outline" size={64} color={theme.colors.text.secondary} />
+      <EmptyListText>No chats yet. Start a new conversation!</EmptyListText>
+    </EmptyListContainer>
   );
 
   return (
     <PlatformContainer>
-      {Platform.OS === 'ios' && <PlatformBlurHeader />}
-      <PlatformHeader>
-        <MenuButton onPress={() => router.push('/admin/settings')}>
-          <Ionicons name="menu" size={24} color={theme.colors.text} />
-        </MenuButton>
-        <PlatformTitle>Chats</PlatformTitle>
-        <PlatformButton
-          onPress={() => router.push('/chat/new')}
-          style={{ padding: 8 }}
-        >
-          <Ionicons name="add-circle" size={24} color={theme.colors.text} />
-        </PlatformButton>
-      </PlatformHeader>
+      <LinearGradient
+        colors={[theme.colors.background, theme.colors.surface]}
+        style={{ flex: 1 }}
+      >
+        {Platform.OS === 'ios' && <PlatformBlurHeader />}
+        <PlatformHeader>
+          <MenuButton onPress={() => router.push('/admin/settings')}>
+            <Ionicons name="menu" size={24} color={theme.colors.text.primary} />
+          </MenuButton>
+          <PlatformTitle>Messages</PlatformTitle>
+        </PlatformHeader>
 
-      <SearchContainer>
-        <PlatformInput
-          placeholder="Search chats..."
-          value={search}
-          onChangeText={setSearch}
-          style={{ marginHorizontal: 16 }}
-        />
-      </SearchContainer>
+        <SearchContainer>
+          <Ionicons name="search" size={20} color={theme.colors.text.secondary} />
+          <SearchInput
+            placeholder="Search conversations..."
+            placeholderTextColor={theme.colors.text.secondary}
+            value={search}
+            onChangeText={setSearch}
+            autoCapitalize="none"
+          />
+        </SearchContainer>
 
-      <FlatList
-        data={filteredChats}
-        renderItem={renderChat}
-        keyExtractor={item => item.id}
-        contentContainerStyle={{ padding: 16 }}
-      />
+        <ChatListContainer>
+          <FlatList
+            data={filteredChats}
+            renderItem={({ item }) => (
+              <ChatItem
+                onPress={() => router.push(`/chat/${item.id}`)}
+                activeOpacity={0.7}
+              >
+                <Avatar source={{ uri: item.avatar }} />
+                <ChatInfo>
+                  <ChatName>{item.name}</ChatName>
+                  <LastMessage numberOfLines={1}>{item.lastMessage}</LastMessage>
+                </ChatInfo>
+                <TimeContainer>
+                  <TimeText>{item.time}</TimeText>
+                  {item.unreadCount > 0 && (
+                    <UnreadBadge>
+                      <UnreadText>{item.unreadCount}</UnreadText>
+                    </UnreadBadge>
+                  )}
+                </TimeContainer>
+              </ChatItem>
+            )}
+            keyExtractor={item => item.id}
+            contentContainerStyle={{ 
+              paddingVertical: 8,
+              flexGrow: 1,
+              paddingBottom: 100 // Add padding to avoid FAB overlap
+            }}
+            ListEmptyComponent={renderEmptyList}
+          />
+          <NewChatButton onPress={() => router.push('/chat/new')}>
+            <Ionicons name="chatbubble-ellipses" size={28} color="#FFFFFF" />
+          </NewChatButton>
+        </ChatListContainer>
+      </LinearGradient>
     </PlatformContainer>
   );
 }

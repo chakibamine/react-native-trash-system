@@ -56,17 +56,40 @@ export default function TrashBinsScreen() {
   const insets = useSafeAreaInsets();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   
-  // List of trash locations with coordinates
+  // List of trash locations with coordinates - Real locations in Morocco
   const [trashLocations, setTrashLocations] = useState<Location[]>([
-    { location: "City Center", status: "empty", coordinates: [31.6295, -7.9811] },
-    { location: "Train Station", status: "full", coordinates: [31.6295, -7.9821] },
+    { 
+      location: "Jamaa el-Fnaa",
+      status: "empty",
+      coordinates: [31.6258, -7.9891]
+    },
+    { 
+      location: "Marrakech Train Station",
+      status: "full",
+      coordinates: [31.6294, -8.0108]
+    },
+    { 
+      location: "Menara Mall",
+      status: "empty",
+      coordinates: [31.6177, -8.0129]
+    },
+    { 
+      location: "Koutoubia Mosque",
+      status: "full",
+      coordinates: [31.6242, -7.9892]
+    },
+    { 
+      location: "Majorelle Garden",
+      status: "empty",
+      coordinates: [31.6417, -7.9889]
+    }
   ]);
 
   // State to track the selected trash location
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
   const [isSelectingLocation, setIsSelectingLocation] = useState(false);
 
-  // Define default center coordinates
+  // Define default center coordinates (Centered on Marrakech city center)
   const defaultCenter: [number, number] = [31.6295, -7.9811];
 
   const handleAddTrash = (newTrash: Location) => {
@@ -111,6 +134,7 @@ export default function TrashBinsScreen() {
             isDarkMode={theme.colors.background === '#121212'}
             isSelectingLocation={isSelectingLocation}
             onLocationSelect={handleLocationSelect}
+            theme={theme}
           />
           <TrashList
             trashLocations={trashLocations}
