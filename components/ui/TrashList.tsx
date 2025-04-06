@@ -124,7 +124,6 @@ const TrashList: React.FC<TrashListProps> = ({
   const translateY = useSharedValue(INITIAL_POSITION);
   const active = useSharedValue(true);
   const [isAddingTrash, setIsAddingTrash] = useState(false);
-  const [isVisible, setIsVisible] = useState(true);
   const [formData, setFormData] = useState({
     location: '',
     status: 'empty',
@@ -202,13 +201,6 @@ const TrashList: React.FC<TrashListProps> = ({
       onStartLocationSelect(updateFormCoordinates);
     }
   };
-
-  const handleItemClick = (item: Location) => {
-    setSelectedLocation(item);
-    scrollTo(MIN_TRANSLATE_Y); // Just collapse the list to minimum position
-  };
-
-  if (!isVisible) return null;
 
   return (
     <PanGestureHandler onGestureEvent={gestureHandler}>
@@ -292,7 +284,7 @@ const TrashList: React.FC<TrashListProps> = ({
             {trashLocations.map((item, index) => (
               <TrashItem
                 key={index}
-                onPress={() => handleItemClick(item)}
+                onPress={() => setSelectedLocation(item)}
                 activeOpacity={0.7}
               >
                 <IconContainer>

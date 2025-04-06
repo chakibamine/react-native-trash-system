@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import styled from 'styled-components/native';
 import { useTheme } from '@/assets/style/ThemeProvider';
 import { Theme } from '@/assets/style/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
 import MapComponent from '@/components/MapComponent';
 import TrashList from '@/components/ui/TrashList';
 import AdminLayout from '../../components/AdminLayout';
@@ -54,50 +53,59 @@ interface Location {
 export default function TrashBinsScreen() {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
+
+  // State for menu toggle
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  
-  // List of trash locations with coordinates
+
+  // State for trash locations
   const [trashLocations, setTrashLocations] = useState<Location[]>([
     { location: "City Center", status: "empty", coordinates: [31.6295, -7.9811] },
     { location: "Train Station", status: "full", coordinates: [31.6295, -7.9821] },
   ]);
 
-  // State to track the selected trash location
+  // State for selected location and location selection
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
   const [isSelectingLocation, setIsSelectingLocation] = useState(false);
+  const formUpdateRef = useRef<((coordinates: [number, number]) => void) | null>(null);
 
-  // Define default center coordinates
+  // Default map center coordinates
   const defaultCenter: [number, number] = [31.6295, -7.9811];
 
+  // Function to add a new trash location
   const handleAddTrash = (newTrash: Location) => {
-    setTrashLocations(prevLocations => [...prevLocations, newTrash]);
+    setTrashLocations((prevLocations) => [...prevLocations, newTrash]);
   };
 
+  // Function to start location selection
   const handleStartLocationSelect = (updateFormCoordinates: (coordinates: [number, number]) => void) => {
+    formUpdateRef.current = updateFormCoordinates;
     setIsSelectingLocation(true);
   };
 
+  // Function to handle location selection
   const handleLocationSelect = (coordinates: [number, number]) => {
+    if (formUpdateRef.current) {
+      formUpdateRef.current(coordinates);
+      formUpdateRef.current = null;
+    }
     setIsSelectingLocation(false);
   };
 
+  // Toggle menu function
   const toggleMenu = () => {
-    setIsMenuOpen(prev => !prev);
-  };
-
-  const handleTrashSelect = (location: Location) => {
-    setSelectedLocation(location);
+    setIsMenuOpen((prev) => !prev);
   };
 
   return (
-    <AdminLayout 
+    <AdminLayout
       currentRoute="/admin/trash-bins"
       isOpen={isMenuOpen}
       onToggleMenu={toggleMenu}
     >
       <Container style={{ paddingTop: insets.top }}>
+        {/* Header */}
         <Header>
-          <MenuButton onPress={toggleMenu}>
+          <MenuButton onPress={toggleMenu} accessibilityLabel="Open Menu">
             <Ionicons
               name="menu"
               size={24}
@@ -107,27 +115,67 @@ export default function TrashBinsScreen() {
           <Title>Manage Trash Bins</Title>
         </Header>
 
+        {/* Map and Trash List */}
         <MapContainer>
-          <MapComponent
+          <MapWithTrashList
             selectedLocation={selectedLocation}
             defaultCenter={defaultCenter}
             trashLocations={trashLocations}
             isDarkMode={theme.colors.background === '#121212'}
             isSelectingLocation={isSelectingLocation}
             onLocationSelect={handleLocationSelect}
-            onTrashSelect={handleTrashSelect}
-            theme={theme}
-          />
-          <TrashList
-            trashLocations={trashLocations}
-            setSelectedLocation={setSelectedLocation}
             onAddTrash={handleAddTrash}
-            isSelectingLocation={isSelectingLocation}
             onStartLocationSelect={handleStartLocationSelect}
-            onLocationSelect={handleLocationSelect}
+            setSelectedLocation={setSelectedLocation}
           />
         </MapContainer>
       </Container>
     </AdminLayout>
   );
-} 
+}
+
+// Reusable MapWithTrashList Component
+interface MapWithTrashListProps {
+  selectedLocation: Location | null;
+  defaultCenter: [number, number];
+  trashLocations: Location[];
+  isDarkMode: boolean;
+  isSelectingLocation: boolean;
+  onLocationSelect: (coordinates: [number, number]) => void;
+  onAddTrash: (newTrash: Location) => void;
+  onStartLocationSelect: (updateFormCoordinates: (coordinates: [number, number]) => void) => void;
+  setSelectedLocation: (location: Location | null) => void;
+}
+
+const MapWithTrashList: React.FC<MapWithTrashListProps> = ({
+  selectedLocation,
+  defaultCenter,
+  trashLocations,
+  isDarkMode,
+  isSelectingLocation,
+  onLocationSelect,
+  onAddTrash,
+  onStartLocationSelect,
+  setSelectedLocation,
+}) => {
+  return (
+    <>
+      <MapComponent
+        selectedLocation={selectedLocation}
+        defaultCenter={defaultCenter}
+        trashLocations={trashLocations}
+        isDarkMode={isDarkMode}
+        isSelectingLocation={isSelectingLocation}
+        onLocationSelect={onLocationSelect}
+      />
+      <TrashList
+        trashLocations={trashLocations}
+        setSelectedLocation={setSelectedLocation}
+        onAddTrash={onAddTrash}
+        isSelectingLocation={isSelectingLocation}
+        onStartLocationSelect={onStartLocationSelect}
+        onLocationSelect={onLocationSelect}
+      />
+    </>
+  );
+};
