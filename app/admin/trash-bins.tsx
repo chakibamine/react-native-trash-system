@@ -74,6 +74,7 @@ export default function TrashBinsScreen() {
   // Function to add a new trash location
   const handleAddTrash = (newTrash: Location) => {
     setTrashLocations((prevLocations) => [...prevLocations, newTrash]);
+    
   };
 
   // Function to start location selection

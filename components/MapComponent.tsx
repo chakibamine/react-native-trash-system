@@ -1,3 +1,4 @@
+// MapComponent
 import React, { useEffect, useRef, useState } from 'react';
 import { WebView } from 'react-native-webview';
 import styled from 'styled-components/native';
@@ -76,13 +77,13 @@ const LoadingContainer = styled.View`
   background-color: rgba(0, 0, 0, 0.3);
 `;
 
-const MapComponent: React.FC<MapComponentProps> = ({ 
-  selectedLocation, 
-  defaultCenter, 
+const MapComponent: React.FC<MapComponentProps> = ({
+  selectedLocation,
+  defaultCenter,
   trashLocations,
   isDarkMode,
   isSelectingLocation = false,
-  onLocationSelect
+  onLocationSelect,
 }) => {
   const webViewRef = useRef<WebView | null>(null);
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
@@ -103,7 +104,6 @@ const MapComponent: React.FC<MapComponentProps> = ({
 
   const startLocationCheck = () => {
     setIsLoading(true);
-    // Check every second if location has been enabled
     locationCheckInterval.current = setInterval(async () => {
       const isEnabled = await checkLocationServices();
       if (isEnabled) {
@@ -112,8 +112,6 @@ const MapComponent: React.FC<MapComponentProps> = ({
         initializeLocationTracking();
       }
     }, 1000);
-
-    // Stop checking after 30 seconds
     setTimeout(() => {
       if (locationCheckInterval.current) {
         clearInterval(locationCheckInterval.current);
@@ -127,20 +125,21 @@ const MapComponent: React.FC<MapComponentProps> = ({
       'Enable Location Services',
       Platform.select({
         ios: 'Please swipe up to access Control Center and tap the Location icon to enable GPS.',
-        android: 'Please swipe down to access Quick Settings and tap the Location icon to enable GPS.',
+        android:
+          'Please swipe down to access Quick Settings and tap the Location icon to enable GPS.',
       }),
       [
-        { 
+        {
           text: 'OK, I\'ll Enable',
           onPress: () => {
             startLocationCheck();
-          }
+          },
         },
         {
           text: 'Cancel',
           style: 'cancel',
-          onPress: () => setIsLoading(false)
-        }
+          onPress: () => setIsLoading(false),
+        },
       ]
     );
   };
@@ -156,8 +155,6 @@ const MapComponent: React.FC<MapComponentProps> = ({
         );
         return;
       }
-
-      // Start watching position
       const locationSubscription = await Location.watchPositionAsync(
         {
           accuracy: Location.Accuracy.High,
@@ -167,19 +164,19 @@ const MapComponent: React.FC<MapComponentProps> = ({
         (location) => {
           const newLocation: [number, number] = [
             location.coords.latitude,
-            location.coords.longitude
+            location.coords.longitude,
           ];
           setUserLocation(newLocation);
-          
           if (webViewRef.current) {
-            webViewRef.current.postMessage(JSON.stringify({
-              type: 'updateUserLocation',
-              location: newLocation
-            }));
+            webViewRef.current.postMessage(
+              JSON.stringify({
+                type: 'updateUserLocation',
+                location: newLocation,
+              })
+            );
           }
         }
       );
-
       return locationSubscription;
     } catch (error) {
       console.error('Error initializing location tracking:', error);
@@ -189,30 +186,28 @@ const MapComponent: React.FC<MapComponentProps> = ({
 
   const centerOnUserLocation = async () => {
     const isEnabled = await checkLocationServices();
-    
     if (!isEnabled) {
       handleLocationError();
       return;
     }
-
     if (userLocation && webViewRef.current) {
-      webViewRef.current.postMessage(JSON.stringify({
-        type: 'centerOnUserLocation',
-        location: userLocation
-      }));
+      webViewRef.current.postMessage(
+        JSON.stringify({
+          type: 'centerOnUserLocation',
+          location: userLocation,
+        })
+      );
     }
   };
 
   useEffect(() => {
     let locationSubscription: Location.LocationSubscription | null = null;
-
     (async () => {
       const isEnabled = await checkLocationServices();
       if (isEnabled) {
         locationSubscription = await initializeLocationTracking();
       }
     })();
-
     return () => {
       if (locationSubscription) {
         locationSubscription.remove();
@@ -251,22 +246,22 @@ const MapComponent: React.FC<MapComponentProps> = ({
 
   return (
     <MapContainer>
-    <WebView
-      ref={webViewRef}
-      originWhitelist={['*']}
-      javaScriptEnabled={true}
+      <WebView
+        ref={webViewRef}
+        originWhitelist={['*']}
+        javaScriptEnabled={true}
         onMessage={handleMessage}
-      source={{
-        html: `
-          <!DOCTYPE html>
-          <html>
-            <head>
-              <meta charset="utf-8">
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <title>Map</title>
-              <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-              <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-              <style>
+        source={{
+          html: `
+            <!DOCTYPE html>
+            <html>
+              <head>
+                <meta charset="utf-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Map</title>
+                <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+                <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+                <style>
                   body {
                     margin: 0;
                     padding: 0;
@@ -362,38 +357,32 @@ const MapComponent: React.FC<MapComponentProps> = ({
                       transform: translateY(-10px);
                     }
                   }
-              </style>
-            </head>
-            <body>
-              <div id="map"></div>
-              <script>
-                const defaultCenter = ${JSON.stringify(defaultCenter)};
+                </style>
+              </head>
+              <body>
+                <div id="map"></div>
+                <script>
+                  const defaultCenter = ${JSON.stringify(defaultCenter)};
                   const map = L.map('map', {
                     zoomControl: true,
                     scrollWheelZoom: true,
                   }).setView(defaultCenter, 14);
-
                   L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/${
                     isDarkMode ? 'dark_all' : 'voyager'
                   }/{z}/{x}/{y}{r}.png', {
-                  maxZoom: 19,
+                    maxZoom: 19,
                     attribution: '&copy; OpenStreetMap contributors'
-                }).addTo(map);
-
-                  // Create user location marker
+                  }).addTo(map);
                   let userMarker = null;
                   let userAccuracyCircle = null;
                   let tempMarker = null;
-
                   function updateUserLocation(coords) {
                     const latlng = L.latLng(coords[0], coords[1]);
-                    
                     if (!userMarker) {
                       userMarker = L.divIcon({
                         className: 'user-location-pulse',
                         iconSize: [16, 16],
                       });
-                      
                       L.marker(latlng, {
                         icon: userMarker,
                         zIndexOffset: 1000
@@ -402,7 +391,6 @@ const MapComponent: React.FC<MapComponentProps> = ({
                       userMarker.setLatLng(latlng);
                     }
                   }
-
                   const createCustomIcon = (status) => {
                     const colors = {
                       empty: {
@@ -414,7 +402,6 @@ const MapComponent: React.FC<MapComponentProps> = ({
                         fillOpacity: ${isDarkMode ? '0.3' : '0.2'}
                       }
                     };
-
                     return L.divIcon({
                       className: 'custom-marker',
                       html: \`<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -425,41 +412,31 @@ const MapComponent: React.FC<MapComponentProps> = ({
                       iconAnchor: [16, 16]
                     });
                   };
-
-                const markers = [];
-                const locations = ${JSON.stringify(trashLocations)};
-                  
-                locations.forEach(loc => {
+                  const markers = [];
+                  const locations = ${JSON.stringify(trashLocations)};
+                  locations.forEach(loc => {
                     const marker = L.marker([loc.coordinates[0], loc.coordinates[1]], {
                       icon: createCustomIcon(loc.status)
                     }).addTo(map);
-                    
                     const popupContent = \`
                       <div class="popup-title">\${loc.location}</div>
                       <div class="popup-status \${loc.status === 'empty' ? 'status-empty' : 'status-full'}">
                         \${loc.status.charAt(0).toUpperCase() + loc.status.slice(1)}
                       </div>
                     \`;
-                    
                     marker.bindPopup(popupContent, {
                       className: 'custom-popup',
                       closeButton: false,
                       offset: [0, -8]
                     });
-                    
                     marker.coordinates = loc.coordinates;
-                  markers.push(marker);
-                });
-
-                  // Handle map clicks for location selection
+                    markers.push(marker);
+                  });
                   map.on('click', function(e) {
                     if (${isSelectingLocation}) {
-                      // Remove previous temporary marker if it exists
                       if (tempMarker) {
                         map.removeLayer(tempMarker);
                       }
-                      
-                      // Create new temporary marker with bouncing animation
                       const tempIcon = L.divIcon({
                         className: 'temp-marker-icon',
                         html: \`<svg width="32" height="48" viewBox="0 0 32 48" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -470,12 +447,9 @@ const MapComponent: React.FC<MapComponentProps> = ({
                         iconSize: [32, 48],
                         iconAnchor: [16, 48]
                       });
-                      
                       tempMarker = L.marker([e.latlng.lat, e.latlng.lng], {
                         icon: tempIcon
                       }).addTo(map);
-
-                      // Send coordinates back to React Native
                       window.ReactNativeWebView.postMessage(JSON.stringify({
                         type: 'mapClick',
                         lat: e.latlng.lat,
@@ -483,23 +457,15 @@ const MapComponent: React.FC<MapComponentProps> = ({
                       }));
                     }
                   });
-
-                  // Update cursor style based on selection mode
-                  if (${isSelectingLocation}) {
-                    document.getElementById('map').classList.add('map-selecting');
-                  } else {
-                    document.getElementById('map').classList.remove('map-selecting');
-                  }
-
-                document.addEventListener('message', (event) => {
-                  const message = JSON.parse(event.data);
-                  if (message.type === 'navigateToLocation') {
-                    const selectedCoordinates = message.location.coordinates;
-                    const marker = markers.find(m => 
-                      m.coordinates[0] === selectedCoordinates[0] && 
-                      m.coordinates[1] === selectedCoordinates[1]
-                    );
-                    if (marker) {
+                  document.addEventListener('message', (event) => {
+                    const message = JSON.parse(event.data);
+                    if (message.type === 'navigateToLocation') {
+                      const selectedCoordinates = message.location.coordinates;
+                      const marker = markers.find(m => 
+                        m.coordinates[0] === selectedCoordinates[0] && 
+                        m.coordinates[1] === selectedCoordinates[1]
+                      );
+                      if (marker) {
                         map.flyTo(selectedCoordinates, 16, {
                           duration: 1,
                           easeLinearity: 0.25
@@ -514,20 +480,20 @@ const MapComponent: React.FC<MapComponentProps> = ({
                         duration: 1,
                         easeLinearity: 0.25
                       });
-                  }
-                });
-              </script>
-            </body>
-          </html>
-        `,
-      }}
-    />
+                    }
+                  });
+                </script>
+              </body>
+            </html>
+          `,
+        }}
+      />
       {isSelectingLocation && (
         <SelectionMessage>
-          <Ionicons 
-            name="location" 
-            size={24} 
-            color={isDarkMode ? '#4CAF50' : '#34A853'} 
+          <Ionicons
+            name="location"
+            size={24}
+            color={isDarkMode ? '#4CAF50' : '#34A853'}
           />
           <SelectionText>
             Tap anywhere on the map to select a location
@@ -539,10 +505,10 @@ const MapComponent: React.FC<MapComponentProps> = ({
         activeOpacity={0.8}
         disabled={isLoading}
       >
-        <Ionicons 
-          name="locate" 
-          size={24} 
-          color={isDarkMode ? '#FFFFFF' : '#000000'} 
+        <Ionicons
+          name="locate"
+          size={24}
+          color={isDarkMode ? '#FFFFFF' : '#000000'}
         />
       </LocationButton>
       {isLoading && (
