@@ -6,7 +6,7 @@ import { Theme } from '@/assets/style/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, Href } from 'expo-router';
-import AdminLayout from '../../components/AdminLayout';
+import AdminLayout from '../../../components/AdminLayout';
 import {
   PlatformContainer,
   PlatformHeader,
@@ -17,7 +17,7 @@ import {
   PlatformAvatar,
   PlatformText,
   PlatformTitle,
-} from '../components/PlatformStyles';
+} from '../../components/PlatformStyles';
 
 // Define prop types for styled components
 type ThemeProps = {
@@ -34,15 +34,15 @@ const AddButton = styled.TouchableOpacity`
   padding: 8px;
 `;
 
-const UserInfo = styled.View`
+const TruckInfo = styled.View`
   flex: 1;
 `;
 
-const UserName = styled(PlatformText)`
+const TruckLicense = styled(PlatformText)`
   font-weight: ${Platform.OS === 'ios' ? '600' : 'bold'};
 `;
 
-const UserEmail = styled(PlatformText)`
+const TruckStatus = styled(PlatformText)`
   font-size: ${Platform.OS === 'ios' ? '13' : '14'}px;
   color: ${(props: ThemeProps) => props.theme.colors.text.secondary};
   margin-top: ${Platform.OS === 'ios' ? '1' : '2'}px;
@@ -53,44 +53,90 @@ const ActionButton = styled.TouchableOpacity`
   margin-left: 8px;
 `;
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  avatar: string;
-  role: 'user' | 'premium';
-  status: 'active' | 'inactive';
+const StatusBadge = styled.View<{ status: string }>`
+  padding: 4px 8px;
+  border-radius: 12px;
+  background-color: ${props => {
+    switch (props.status) {
+      case 'ACTIVE':
+        return '#4CAF50';
+      case 'MAINTENANCE':
+        return '#FFC107';
+      case 'INACTIVE':
+        return '#F44336';
+      default:
+        return '#9E9E9E';
+    }
+  }};
+  margin-top: 4px;
+`;
+
+const StatusText = styled(PlatformText)`
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+`;
+
+enum GarbageTruckStatus {
+  ACTIVE = 'ACTIVE',
+  MAINTENANCE = 'MAINTENANCE',
+  INACTIVE = 'INACTIVE'
 }
 
-export default function ManageUsersScreen() {
+interface Truck {
+  id: string;
+  licenseNumber: string;
+  vehicleId: string;
+  isAvailable: boolean;
+  currentLat: number;
+  currentLng: number;
+  speed: number;
+  status: GarbageTruckStatus;
+  lastUpdated: Date;
+  driverId: string;
+}
+
+export default function ManageTrucksScreen() {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const [search, setSearch] = useState('');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [users, setUsers] = useState<User[]>([
+  const [trucks, setTrucks] = useState<Truck[]>([
     {
       id: '1',
-      name: 'John Doe',
-      email: 'john@example.com',
-      avatar: 'https://ui-avatars.com/api/?name=John+Doe&background=random',
-      role: 'premium',
-      status: 'active'
+      licenseNumber: 'TRK-001',
+      vehicleId: 'VH-001',
+      isAvailable: true,
+      currentLat: 14.5995,
+      currentLng: 120.9842,
+      speed: 45,
+      status: GarbageTruckStatus.ACTIVE,
+      lastUpdated: new Date(),
+      driverId: 'DRV-001'
     },
     {
       id: '2',
-      name: 'Jane Smith',
-      email: 'jane@example.com',
-      avatar: 'https://ui-avatars.com/api/?name=Jane+Smith&background=random',
-      role: 'user',
-      status: 'active'
+      licenseNumber: 'TRK-002',
+      vehicleId: 'VH-002',
+      isAvailable: false,
+      currentLat: 14.5996,
+      currentLng: 120.9843,
+      speed: 0,
+      status: GarbageTruckStatus.MAINTENANCE,
+      lastUpdated: new Date(),
+      driverId: 'DRV-002'
     },
     {
       id: '3',
-      name: 'Mike Johnson',
-      email: 'mike@example.com',
-      avatar: 'https://ui-avatars.com/api/?name=Mike+Johnson&background=random',
-      role: 'user',
-      status: 'inactive'
+      licenseNumber: 'TRK-003',
+      vehicleId: 'VH-003',
+      isAvailable: false,
+      currentLat: 14.5997,
+      currentLng: 120.9844,
+      speed: 0,
+      status: GarbageTruckStatus.INACTIVE,
+      lastUpdated: new Date(),
+      driverId: 'DRV-003'
     }
   ]);
 
@@ -98,19 +144,19 @@ export default function ManageUsersScreen() {
     setIsMenuOpen(prev => !prev);
   };
 
-  const filteredUsers = users.filter(user =>
-    user.name.toLowerCase().includes(search.toLowerCase()) ||
-    user.email.toLowerCase().includes(search.toLowerCase())
+  const filteredTrucks = trucks.filter(truck =>
+    truck.licenseNumber.toLowerCase().includes(search.toLowerCase()) ||
+    truck.vehicleId.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleEdit = (user: User) => {
-    router.push(`/admin/edit-user?id=${user.id}`);
+  const handleEdit = (truck: Truck) => {
+    router.push(`/admin/edit-truck?id=${truck.id}`);
   };
 
-  const handleDelete = (user: User) => {
+  const handleDelete = (truck: Truck) => {
     Alert.alert(
-      'Delete User',
-      `Are you sure you want to delete ${user.name}?`,
+      'Delete Truck',
+      `Are you sure you want to delete truck ${truck.licenseNumber}?`,
       [
         {
           text: 'Cancel',
@@ -120,7 +166,7 @@ export default function ManageUsersScreen() {
           text: 'Delete',
           style: 'destructive',
           onPress: () => {
-            setUsers(prev => prev.filter(u => u.id !== user.id));
+            setTrucks(prev => prev.filter(t => t.id !== truck.id));
           }
         }
       ]
@@ -128,16 +174,19 @@ export default function ManageUsersScreen() {
   };
 
   const handleAdd = () => {
-    router.push('/admin/add-user' as Href);
+    router.push('/admin/add-truck' as Href);
   };
 
-  const renderUser = ({ item }: { item: User }) => (
+  const renderTruck = ({ item }: { item: Truck }) => (
     <PlatformListItem theme={theme}>
-      <PlatformAvatar source={{ uri: item.avatar }} />
-      <UserInfo>
-        <UserName theme={theme}>{item.name}</UserName>
-        <UserEmail theme={theme}>{item.email}</UserEmail>
-      </UserInfo>
+      <PlatformAvatar source={{ uri: `https://ui-avatars.com/api/?name=${item.licenseNumber}&background=random` }} />
+      <TruckInfo>
+        <TruckLicense theme={theme}>{item.licenseNumber}</TruckLicense>
+        <TruckStatus theme={theme}>Vehicle ID: {item.vehicleId}</TruckStatus>
+        <StatusBadge status={item.status}>
+          <StatusText>{item.status}</StatusText>
+        </StatusBadge>
+      </TruckInfo>
       <ActionButton onPress={() => handleEdit(item)}>
         <Ionicons name="pencil" size={20} color={theme.colors.primary} />
       </ActionButton>
@@ -149,7 +198,7 @@ export default function ManageUsersScreen() {
 
   return (
     <AdminLayout 
-      currentRoute="/admin/manage-users"
+      currentRoute="/admin/manage-trucks"
       isOpen={isMenuOpen}
       onToggleMenu={toggleMenu}
     >
@@ -165,7 +214,7 @@ export default function ManageUsersScreen() {
               color={theme.colors.text.primary}
             />
           </MenuButton>
-          <PlatformTitle theme={theme}>Manage Users</PlatformTitle>
+          <PlatformTitle theme={theme}>Manage Trucks</PlatformTitle>
           <AddButton onPress={handleAdd}>
             <Ionicons
               name={Platform.OS === 'ios' ? 'add-circle' : 'add'}
@@ -182,7 +231,7 @@ export default function ManageUsersScreen() {
             color={theme.colors.text.secondary}
           />
           <PlatformInput
-            placeholder="Search users"
+            placeholder="Search trucks"
             placeholderTextColor={theme.colors.text.secondary}
             value={search}
             onChangeText={setSearch}
@@ -193,8 +242,8 @@ export default function ManageUsersScreen() {
         </PlatformSearchContainer>
 
         <FlatList
-          data={filteredUsers}
-          renderItem={renderUser}
+          data={filteredTrucks}
+          renderItem={renderTruck}
           keyExtractor={item => item.id}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{

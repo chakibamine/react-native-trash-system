@@ -7,7 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, Href } from 'expo-router';
 import { Role } from '@/types/user';
-import AdminLayout from '../../components/AdminLayout';
+import AdminLayout from '../../../components/AdminLayout';
 
 // Define prop types for styled components
 type ThemeProps = {

@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MapComponent from '@/components/MapComponent';
 import TrashList from '@/components/ui/TrashList';
-import AdminLayout from '../../components/AdminLayout';
+import AdminLayout from '../../../components/AdminLayout';
 
 // Define prop types for styled components
 type ThemeProps = {

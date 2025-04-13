@@ -6,7 +6,7 @@ import { Theme } from '@/assets/style/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, Href } from 'expo-router';
-import AdminLayout from '../../components/AdminLayout';
+import AdminLayout from '../../../components/AdminLayout';
 import { BlurView } from 'expo-blur';
 
 // Define prop types for styled components
